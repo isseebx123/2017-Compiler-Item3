@@ -16,18 +16,18 @@ public class TestMiniC {
 		MiniCAstVisitor visitor = new MiniCAstVisitor();
 		UcodeGenVisitor uvisitor = new UcodeGenVisitor();
 		visitor.visit(tree).accept(uvisitor);
-		
+		System.out.println(uvisitor.UCode);
 		// 파일 출력
-		try {
-			BufferedWriter buf = new BufferedWriter(new FileWriter("ucode.uco"));
-			buf.write(uvisitor.UCode);
-			System.out.println(uvisitor.UCode);
-			System.out.println("ucode.uco파일로 코드를 출력하였습니다.");
-			buf.close();
-		} catch (Exception e) {
-			System.out.println("File write Err!");
-			System.exit(1);
-		}
+//		try {
+//			BufferedWriter buf = new BufferedWriter(new FileWriter("ucode.uco"));
+//			buf.write(uvisitor.UCode);
+//			System.out.println(uvisitor.UCode);
+//			System.out.println("ucode.uco파일로 코드를 출력하였습니다.");
+//			buf.close();
+//		} catch (Exception e) {
+//			System.out.println("File write Err!");
+//			System.exit(1);
+//		}
 	}
 
 }
