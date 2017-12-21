@@ -306,7 +306,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 			visitExpr(expr);
 			UCode += ELEVEN_SPACE + "fjp " + elseLabel + "\n";
-			UCode += ELEVEN_SPACE + "goto" + getNewBasicBlock() + "\n";
+			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 			int BBElseNumber = BasicBlockCount;
 			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
 
