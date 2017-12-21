@@ -1,1 +1,4 @@
+/ASTVisitor/
 /Domain/
+/MiniC.tokens
+/MiniCLexer.tokens
