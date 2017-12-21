@@ -23,3 +23,13 @@ hs_err_pid*
 
 # bin/.class
 bin/
+
+# excute trash files
+src/MiniC.tokens
+src/MiniCBaseListener.java
+src/MiniCBaseVisitor.java
+src/MiniCLexer.java
+src/MiniCLexer.tokens
+src/MiniCListener.java
+src/MiniCParser.java
+src/MiniCVisitor.java
