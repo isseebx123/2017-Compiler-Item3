@@ -220,15 +220,20 @@ public class UcodeGenVisitor implements ASTVisitor {
 		String startLabel = getNewLabel();
 		String endLabel = getNewLabel();
 
+		UCode += getNewBasicBlock() + ":\n"; // BBLeader: While_start
+		int BBStartNumber = BasicBlockCount;
 		UCode += startLabel + getSpace(startLabel.length()) + "nop\n";
+		
 		visitExpr(expr);
+		
 		UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
 		UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 		int BBEndNumber = BasicBlockCount;
 
-		UCode += "\n" + getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
+		UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
 		visitStmt(stmt);
 		UCode += ELEVEN_SPACE + "ujp " + startLabel + "\n";
+		UCode += ELEVEN_SPACE + "goto " + getThisBasicBlock(BBStartNumber) + "\n";
 		UCode += getThisBasicBlock(BBEndNumber) + ":\n"; // <BB End>: target
 		UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
 	}
@@ -243,12 +248,23 @@ public class UcodeGenVisitor implements ASTVisitor {
 		String endLabel = getNewLabel();
 		
 		visitStmt(Lexpr);
+		
+		UCode += getNewBasicBlock() + ":\n"; // BBLeader: For_start
+		int BBStartNumber = BasicBlockCount;
 		UCode += startLabel + getSpace(startLabel.length()) + "nop\n";
+		
 		visitStmt(Mexpr);
+		
 		UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
+		UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
+		int BBEndNumber = BasicBlockCount;
+		UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
+		
 		visitStmt(stmt);
 		visitExpr(Rexpr);
 		UCode += ELEVEN_SPACE + "ujp " + startLabel + "\n";
+		UCode += ELEVEN_SPACE + "goto " + getThisBasicBlock(BBStartNumber) + "\n";
+		UCode += getThisBasicBlock(BBEndNumber) + ":\n"; // <BB End>: target
 		UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
 	}
 
