@@ -36,7 +36,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 	private final String ELEVEN_SPACE = "           ";
 
 	/* Control Flow Graph(CFG) */
-	private int BasicBlockCount = 1;
+	private int BasicBlockCount = 0;
 	
 	/* private defined Methods */
 	// 새로운 라벨 문자열을 받아오는 메소드
@@ -44,6 +44,13 @@ public class UcodeGenVisitor implements ASTVisitor {
 		return "$$" + (LabelNumber++);
 	}
 
+	private String getNewBasicBlock() {
+		return "<bb "+ (++BasicBlockCount) + ">";
+	}
+	private String getThisBasicBlock(int BBNum) {
+		return "<bb "+ BBNum + ">";
+	}
+	
 	// 남은 공백 문자열을 받아오는 메소드
 	private String getSpace(int curNum) {
 		return ELEVEN_SPACE.substring(0, 11 - curNum);
@@ -60,11 +67,13 @@ public class UcodeGenVisitor implements ASTVisitor {
 	public void visitProgram(Program node) {
 		List<Declaration> decls = node.decls;
 		final int declSize = decls.size();
+		
+		// control flow graph basic block init
+		UCode += getNewBasicBlock() + ":\n";
+		
 		for (int i = 0; i < declSize; i++) {
 			visitDecl(decls.get(i));
 		}
-		// control flow graph basic block init
-		UCode += "<bb 1>:";
 		
 		UCode += ELEVEN_SPACE + "bgn " + GlobalVariableNum + "\n";
 		UCode += ELEVEN_SPACE + "ldp\n";
@@ -275,8 +284,13 @@ public class UcodeGenVisitor implements ASTVisitor {
 			// if
 			visitExpr(expr);
 			UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
+			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
+			int BBNumber = BasicBlockCount;
+			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후의 instruction
+			
 			visitStmt(stmt1);
-
+			
+			UCode += getThisBasicBlock(BBNumber) + ":\n"; // BBLeader: 브랜치의 target instruction
 			// end-if label
 			UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
 		} else {
@@ -285,16 +299,25 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 			visitExpr(expr);
 			UCode += ELEVEN_SPACE + "fjp " + elseLabel + "\n";
+			UCode += ELEVEN_SPACE + "goto" + getNewBasicBlock() + "\n";
+			int BBElseNumber = BasicBlockCount;
+			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후의 instruction
+			
 			visitStmt(stmt1);
 			UCode += ELEVEN_SPACE + "ujp " + endLabel + "\n";
-
+			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
+			int BBEndNumber = BasicBlockCount;
+			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후의 instruction
+			
 			// else label
+			UCode += getThisBasicBlock(BBElseNumber) + ":\n"; // BBLeader: 브랜치의 target instruction
 			UCode += elseLabel + getSpace(elseLabel.length()) + "nop\n";
 
 			Statement stmt2 = node.else_stmt;
 			visitStmt(stmt2);
 
 			// end-if label
+			UCode += getThisBasicBlock(BBEndNumber) + ":\n"; // BBLeader: 브랜치의 target instruction
 			UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
 		}
 	}
