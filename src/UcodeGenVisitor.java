@@ -19,7 +19,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 	private final int LOCAL_VARIABLE_BASE = 2; // 로컬변수의 베이스
 	private final int ISARRAY = 1; // 변수가 배열이면 1
 	private final int ISNOTARRAY = 0; // 변수가 배열이 아니면 0
-
+	
 	/* Variable */
 	private HashMap<String, int[]> LocalVariableMap = new HashMap<>();
 	private HashMap<String, int[]> GlobalVariableMap = new HashMap<>();
@@ -35,6 +35,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 	public String UCode = "";
 	private final String ELEVEN_SPACE = "           ";
 
+	/* Control Flow Graph(CFG) */
+	private int BasicBlockCount = 1;
+	
 	/* private defined Methods */
 	// 새로운 라벨 문자열을 받아오는 메소드
 	private String getNewLabel() {
@@ -60,7 +63,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 		for (int i = 0; i < declSize; i++) {
 			visitDecl(decls.get(i));
 		}
-
+		// control flow graph basic block init
+		UCode += "<bb 1>:";
+		
 		UCode += ELEVEN_SPACE + "bgn " + GlobalVariableNum + "\n";
 		UCode += ELEVEN_SPACE + "ldp\n";
 		UCode += ELEVEN_SPACE + "call main\n";
