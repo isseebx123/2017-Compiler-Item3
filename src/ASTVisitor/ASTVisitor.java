@@ -40,4 +40,6 @@ public interface ASTVisitor {
 	public void visitExpr(Expression node);
 
 	public void visitArgs(Arguments node);
+
+	public void visitFor_stmt(For_Statement node);
 }

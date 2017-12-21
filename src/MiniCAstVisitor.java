@@ -199,6 +199,8 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 			statement = visitReturn_stmt((MiniCParser.Return_stmtContext) childStmt);
 		} else if (childStmt instanceof MiniCParser.While_stmtContext) {
 			statement = visitWhile_stmt((MiniCParser.While_stmtContext) childStmt);
+		} else if (childStmt instanceof MiniCParser.For_stmtContext) {
+			statement = visitFor_stmt((MiniCParser.For_stmtContext) childStmt);
 		}
 
 		return statement;
@@ -287,6 +289,22 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 
 		return (Statement) stmt;
 	}
+	
+	@Override
+	public Statement visitFor_stmt(MiniCParser.For_stmtContext ctx) {
+		For_Statement stmt = null;
+		TerminalNode for_node = (TerminalNode) ctx.getChild(0);
+		Statement Lexpr = visitExpr_stmt((MiniCParser.Expr_stmtContext) ctx.getChild(2));
+		Statement Mexpr = visitExpr_stmt((MiniCParser.Expr_stmtContext) ctx.getChild(3));
+		Expression Rexpr = visitExpr((MiniCParser.ExprContext) ctx.getChild(4));
+		Statement _stmt = visitStmt((MiniCParser.StmtContext) ctx.getChild(6));
+
+		stmt = new For_Statement(for_node, Lexpr, Mexpr, Rexpr, _stmt);
+
+		return (Statement) stmt;
+	}
+	
+	
 
 	@Override
 	public Expression visitExpr(MiniCParser.ExprContext ctx) {

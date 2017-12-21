@@ -188,6 +188,8 @@ public class UcodeGenVisitor implements ASTVisitor {
 			visitReturn_stmt((Return_Statement) node);
 		} else if (node instanceof While_Statement) {
 			visitWhile_stmt((While_Statement) node);
+		} else if (node instanceof For_Statement) {
+			visitFor_stmt((For_Statement) node);
 		}
 	}
 
@@ -207,6 +209,25 @@ public class UcodeGenVisitor implements ASTVisitor {
 		visitExpr(expr);
 		UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
 		visitStmt(stmt);
+		UCode += ELEVEN_SPACE + "ujp " + startLabel + "\n";
+		UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
+	}
+	
+	@Override
+	public void visitFor_stmt(For_Statement node) {
+		Statement Lexpr = node.Lexpr;
+		Statement Mexpr = node.Mexpr;
+		Expression Rexpr = node.Rexpr;
+		Statement stmt = node.stmt;
+		String startLabel = getNewLabel();
+		String endLabel = getNewLabel();
+		
+		visitStmt(Lexpr);
+		UCode += startLabel + getSpace(startLabel.length()) + "nop\n";
+		visitStmt(Mexpr);
+		UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
+		visitStmt(stmt);
+		visitExpr(Rexpr);
 		UCode += ELEVEN_SPACE + "ujp " + startLabel + "\n";
 		UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
 	}
@@ -337,7 +358,6 @@ public class UcodeGenVisitor implements ASTVisitor {
 			TerminalNode t_node = n.t_node;
 			Expression expr = n.expr;
 			int arrayVariable[] = getVariableWithShortestScope(t_node.getText());
-
 			visitExpr(expr);
 			UCode += ELEVEN_SPACE + "str " + arrayVariable[0] + " " + arrayVariable[1] + "\n";
 		} else if (node instanceof BinaryOpNode) {
@@ -345,7 +365,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			BinaryOpNode n = (BinaryOpNode) node;
 			Expression lhs = n.lhs, rhs = n.rhs;
 			String op = n.op;
-
+			
 			visitExpr(lhs);
 			visitExpr(rhs);
 
@@ -395,6 +415,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			// 1 ¶Ç´Â x
 			TerminalExpression n = (TerminalExpression) node;
 			String terminal = n.t_node.getText();
+
 			int Variable[] = getVariableWithShortestScope(terminal);
 			if (Variable != null) {
 				// IDENT
@@ -444,5 +465,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			visitExpr(expr);
 		}
 	}
+
+	
 
 }

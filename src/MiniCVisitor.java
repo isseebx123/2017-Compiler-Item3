@@ -70,6 +70,12 @@ public interface MiniCVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitWhile_stmt(MiniCParser.While_stmtContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MiniCParser#for_stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFor_stmt(MiniCParser.For_stmtContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MiniCParser#compound_stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
