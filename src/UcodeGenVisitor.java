@@ -285,12 +285,12 @@ public class UcodeGenVisitor implements ASTVisitor {
 			visitExpr(expr);
 			UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
 			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
-			int BBNumber = BasicBlockCount;
+			int BBEndNumber = BasicBlockCount;
 			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후의 instruction
 			
 			visitStmt(stmt1);
 			
-			UCode += getThisBasicBlock(BBNumber) + ":\n"; // BBLeader: 브랜치의 target instruction
+			UCode += getThisBasicBlock(BBEndNumber) + ":\n"; // <BB End>: 브랜치의 target instruction
 			// end-if label
 			UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
 		} else {
@@ -307,17 +307,18 @@ public class UcodeGenVisitor implements ASTVisitor {
 			UCode += ELEVEN_SPACE + "ujp " + endLabel + "\n";
 			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 			int BBEndNumber = BasicBlockCount;
-			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후의 instruction
 			
 			// else label
-			UCode += getThisBasicBlock(BBElseNumber) + ":\n"; // BBLeader: 브랜치의 target instruction
+			// <BB Else>: 브랜치의 target instruction
+			// 브랜치 직후의 instruction과 겹침. 베이직블록 하나만 작성
+			UCode += getThisBasicBlock(BBElseNumber) + ":\n"; 
 			UCode += elseLabel + getSpace(elseLabel.length()) + "nop\n";
 
 			Statement stmt2 = node.else_stmt;
 			visitStmt(stmt2);
 
 			// end-if label
-			UCode += getThisBasicBlock(BBEndNumber) + ":\n"; // BBLeader: 브랜치의 target instruction
+			UCode += getThisBasicBlock(BBEndNumber) + ":\n"; // <BB End>: 브랜치의 target instruction
 			UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
 		}
 	}
