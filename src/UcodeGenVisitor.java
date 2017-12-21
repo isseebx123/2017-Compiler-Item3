@@ -35,10 +35,21 @@ public class UcodeGenVisitor implements ASTVisitor {
 	public String UCode = "";
 	private final String ELEVEN_SPACE = "           ";
 
+	/* Control Flow Graph(CFG) */
+	private int BasicBlockCount = 0;
+
 	/* private defined Methods */
 	// 새로운 라벨 문자열을 받아오는 메소드
 	private String getNewLabel() {
 		return "$$" + (LabelNumber++);
+	}
+
+	private String getNewBasicBlock() {
+		return "<bb " + (++BasicBlockCount) + ">";
+	}
+
+	private String getThisBasicBlock(int BBNum) {
+		return "<bb " + BBNum + ">";
 	}
 
 	// 남은 공백 문자열을 받아오는 메소드
@@ -57,6 +68,10 @@ public class UcodeGenVisitor implements ASTVisitor {
 	public void visitProgram(Program node) {
 		List<Declaration> decls = node.decls;
 		final int declSize = decls.size();
+
+		// control flow graph basic block init
+		UCode += getNewBasicBlock() + ":\n";
+
 		for (int i = 0; i < declSize; i++) {
 			visitDecl(decls.get(i));
 		}
@@ -208,8 +223,13 @@ public class UcodeGenVisitor implements ASTVisitor {
 		UCode += startLabel + getSpace(startLabel.length()) + "nop\n";
 		visitExpr(expr);
 		UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
+		UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
+		int BBEndNumber = BasicBlockCount;
+
+		UCode += "\n" + getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
 		visitStmt(stmt);
 		UCode += ELEVEN_SPACE + "ujp " + startLabel + "\n";
+		UCode += getThisBasicBlock(BBEndNumber) + ":\n"; // <BB End>: target
 		UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
 	}
 	
@@ -291,7 +311,13 @@ public class UcodeGenVisitor implements ASTVisitor {
 			// if
 			visitExpr(expr);
 			UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
+			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
+			int BBEndNumber = BasicBlockCount;
+			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
+
 			visitStmt(stmt1);
+
+			UCode += getThisBasicBlock(BBEndNumber) + ":\n"; // <BB End>: target
 
 			// end-if label
 			UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
@@ -301,16 +327,26 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 			visitExpr(expr);
 			UCode += ELEVEN_SPACE + "fjp " + elseLabel + "\n";
+			UCode += ELEVEN_SPACE + "goto" + getNewBasicBlock() + "\n";
+			int BBElseNumber = BasicBlockCount;
+			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
+
 			visitStmt(stmt1);
 			UCode += ELEVEN_SPACE + "ujp " + endLabel + "\n";
+			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
+			int BBEndNumber = BasicBlockCount;
 
 			// else label
+			// <BB Else>: target
+			// 브랜치 직후의 instruction과 겹침. 베이직블록 하나만 작성
+			UCode += getThisBasicBlock(BBElseNumber) + ":\n";
 			UCode += elseLabel + getSpace(elseLabel.length()) + "nop\n";
 
 			Statement stmt2 = node.else_stmt;
 			visitStmt(stmt2);
 
 			// end-if label
+			UCode += getThisBasicBlock(BBEndNumber) + ":\n"; // <BB End>: target
 			UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
 		}
 	}
