@@ -17,10 +17,12 @@ param		: type_spec IDENT
 stmt		: expr_stmt			
 		| compound_stmt			
 		| if_stmt			
-		| while_stmt			
+		| while_stmt	
+		| for_stmt		
 		| return_stmt			;
 expr_stmt	: expr ';'			;
 while_stmt	: WHILE '(' expr ')' stmt	;
+for_stmt	: FOR '(' expr_stmt expr_stmt expr ')' stmt	;
 compound_stmt: '{' local_decl* stmt* '}'	;
 local_decl	: type_spec IDENT ';'
 		| type_spec IDENT '=' LITERAL ';'	
@@ -48,6 +50,7 @@ INT: 'int';
 
 WHILE: 'while';
 IF: 'if';
+FOR: 'for';
 ELSE: 'else';
 RETURN: 'return';
 OR: 'or';
