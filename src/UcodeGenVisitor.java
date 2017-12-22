@@ -491,7 +491,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			Expression lhs = n.lhs;
 			Expression rhs = n.rhs;
 			int arrayVariable[] = getVariableWithShortestScope(t_node.getText());
-
+			
 			// 결과가 스택에 들어있다고 생각. LITERAL|IDENT에서 처리.
 			visitExpr(lhs);
 			UCode += ELEVEN_SPACE + "lda " + arrayVariable[0] + " " + arrayVariable[1] + "\n";
