@@ -625,37 +625,51 @@ public class UcodeGenVisitor implements ASTVisitor {
 		}
 	}
 
-	static String switchEndLabel;
-	static String nextCase;
-	static boolean lastCase;
-	static boolean defaultCase;
+	static String switchEndLabel;	//스위치문 나가는 곳  
+	static String nextCase;			//스위치문에서 다음 Case문 위치
+	static boolean lastCase;		//현재보고있는위치가 마지막 Case인지
+	static boolean defaultCase;		//default Case가 있는지
+	static int BBnextCaseNumber;	//스위치문에서 다음 Case문 BB번호
+	static int BBSwitch;			//스위치문 나가는곳 BB번호
 	@Override
 	public void visitSwitch_stmt(Switch_Statement node) {
 		TerminalNode ident = node.ident;
 		List<Case_Statement> stmts = node.stmts;
 		Default_Statement defaultnode = node.defaultnode;
 		
-		if (stmts.size() != 0)
+		if (stmts.size() != 0)	//switch문안에 case가 있으면 나가는곳 설정
 			switchEndLabel = getNewLabel();
 		
-		if(defaultnode != null)
+		if(defaultnode != null)	//default Case가 있으면 true
 			defaultCase = true;
+		
+		getNewBasicBlock();	//switch나가는 블록
+		BBSwitch = BasicBlockCount;	//나가는 블록 저장
 		
 		for(int i=0; i<stmts.size(); i++){
 			int arrayVariable[] = getVariableWithShortestScope(ident.getText());
 			UCode += ELEVEN_SPACE + "lda " + arrayVariable[0] + " " + arrayVariable[1] + "\n";		
-			if(i == stmts.size()-1)
+			
+			if(i == stmts.size()-1)	//마지막 Case문이면 true
 				lastCase = true;
+			
 			visitCase_stmt(stmts.get(i));
-			if(i != stmts.size()-1)
+			
+			if(i != stmts.size()-1){	//마지막 case가 아니라면 
+				UCode += "<bb " + BBnextCaseNumber + ">:\n"; // BBLeader: 브랜치 직후
 				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";	
-			else if( i == stmts.size()-1 && defaultCase == true)
+			}	
+			else if( i == stmts.size()-1 && defaultCase == true){	//마지막인데 default가 있는 경우
+				UCode += "<bb " + BBnextCaseNumber + ">:\n"; // BBLeader: 브랜치 직후
 				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";	
+			}		
+			//마지막인데 default가있는경우에 대한 U-code는 visitCase_stmt에서 만들어주어 여기서 안만들게한다. (조금최적화)
 		}
 		
 		if(defaultCase == true){
 			visitDefault_stmt(defaultnode);
 		}
+		UCode += "<bb " + BBSwitch + ">:\n";	//나가는 곳
 		UCode += switchEndLabel + getSpace(switchEndLabel.length()) + "nop\n";
 	}
 
@@ -666,25 +680,31 @@ public class UcodeGenVisitor implements ASTVisitor {
 		TerminalNode breaknode = node.breaknode;
 		
 		int Variable[] = getVariableWithShortestScope(caseVal.getText());
-		if (Variable != null) {
+		if (Variable != null) {	//case조건은 문자 or 숫자 박에 안된다.
 			UCode += ELEVEN_SPACE + "lod " + Variable[0] + " " + Variable[1] + "\n";
 		} else{
 			UCode += ELEVEN_SPACE + "ldc " + caseVal.getText() + "\n";
 		}
 		UCode += ELEVEN_SPACE + "eq\n";
-		if(lastCase == false || defaultCase == true){
+		if(lastCase == false || defaultCase == true){	//마지막 Case아니거나 마지막인데 default있는경우 다음위치를 정해줘야함
 			nextCase = getNewLabel();
 			UCode += ELEVEN_SPACE + "fjp " + nextCase + "\n";
-		} else{
+			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
+			BBnextCaseNumber = BasicBlockCount;
+			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
+		} else{	//마지막 Case인데 default가 없는경우  여기서 u-code생성
 			UCode += ELEVEN_SPACE + "fjp " + switchEndLabel + "\n";
+			UCode += ELEVEN_SPACE + "goto <bb " + BBSwitch + ">\n";
+			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
 		}
 		
 		for(int i=0; i<stmts.size(); i++){
 			visitStmt(stmts.get(i));
 		}
 		
-		if(breaknode != null){
+		if(breaknode != null){	//break문이 있는 경우 switch문 빠져나가게 한다.
 			UCode += ELEVEN_SPACE + "ujp " + switchEndLabel + "\n";
+			UCode += ELEVEN_SPACE + "goto <bb " + BBSwitch + ">\n";
 		}
 	}	
 

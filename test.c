@@ -5,15 +5,13 @@ void main ()
 	
    switch(a){
      case 1:
-	b = 1;
-	break;
-     case 2:
-	b = 1;
-     case 3:
-	b = 2;
+        b = 1;
         break;
-     case 4:
-        b= 3;
+     case 2:
+        b = 2;
+     case 3:
+	b = 3;
+        break;
    }
 }
 
