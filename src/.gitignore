@@ -1,5 +1,4 @@
 # excute trash files
-MiniC.tokens
 MiniCBaseListener.java
 MiniCBaseVisitor.java
 MiniCLexer.java
