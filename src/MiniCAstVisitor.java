@@ -41,7 +41,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 		ParseTree childDecl = ctx.getChild(0);
 		Declaration decl = null;
 
-		/* Local_Declaration¿∫ µÈæÓø¿¡ˆ æ ¥¬¥Ÿ! */
+		/* Local_DeclarationÏùÄ Îì§Ïñ¥Ïò§ÏßÄ ÏïäÎäîÎã§! */
 		if (childDecl instanceof MiniCParser.Fun_declContext) {
 			decl = visitFun_decl((MiniCParser.Fun_declContext) childDecl);
 		} else if (childDecl instanceof MiniCParser.Var_declContext) {
@@ -145,7 +145,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 		TypeSpecification typeSpecification;
 		final int CHILDCOUNT = ctx.getChildCount();
 
-		// ∞¯πÈ
+		// Í≥µÎ∞±
 		if (CHILDCOUNT == 0) {
 			parameters = new Parameters();
 		}
@@ -205,8 +205,9 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 			statement = visitWhile_stmt((MiniCParser.While_stmtContext) childStmt);
 		} else if (childStmt instanceof MiniCParser.For_stmtContext) {
 			statement = visitFor_stmt((MiniCParser.For_stmtContext) childStmt);
+		} else if (childStmt instanceof MiniCParser.Switch_stmtContext) { ;
+			statement = visitSwitch_stmt((MiniCParser.Switch_stmtContext) childStmt);
 		}
-
 		return statement;
 	}
 
@@ -263,6 +264,72 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 		}
 
 		return (Statement) stmt;
+	}
+	
+	@Override
+	public Statement visitSwitch_stmt(MiniCParser.Switch_stmtContext ctx) {
+		Statement stmt = null;
+		
+		TerminalNode switchnode = (TerminalNode) ctx.getChild(0);
+		TerminalNode ident = (TerminalNode) ctx.getChild(2);
+		List<Case_Statement> case_stmt = new ArrayList();
+		Default_Statement ds = null;
+		final int CHILDCOUNT = ctx.getChildCount();
+		for(int i=5; i<CHILDCOUNT-1; i++){
+			ParseTree child = ctx.getChild(i);
+			if(child instanceof MiniCParser.Case_stmtContext){
+				Case_Statement cs = visitCase_stmt((MiniCParser.Case_stmtContext) ctx.getChild(i));
+				case_stmt.add(cs);
+			} else if(child instanceof MiniCParser.Default_stmtContext){
+				ds = visitDefault_stmt((MiniCParser.Default_stmtContext) ctx.getChild(i));
+			}	
+		}
+		
+		if(ctx.getChild(CHILDCOUNT-2) instanceof MiniCParser.Default_stmtContext)
+			stmt = new Switch_Statement(switchnode, ident, case_stmt, ds);
+		else
+			stmt = new Switch_Statement(switchnode, ident, case_stmt);
+	
+		return (Statement) stmt;
+	}
+	
+	@Override
+	public Case_Statement visitCase_stmt(MiniCParser.Case_stmtContext ctx) {
+		List<Statement> stmts = new ArrayList();
+		Case_Statement stmt = null;
+		
+		TerminalNode casenode = (TerminalNode) ctx.getChild(0);
+		TerminalNode caseVal = (TerminalNode) ctx.getChild(1);
+		TerminalNode breaknode = null;
+		final int CHILDCOUNT = ctx.getChildCount();
+		for(int i=3; i<CHILDCOUNT; i++){
+			ParseTree child = ctx.getChild(i);
+			if (child instanceof MiniCParser.StmtContext) {
+				Statement statement = visitStmt((MiniCParser.StmtContext) child);
+				stmts.add(statement);
+			}		
+		}
+		if (ctx.getChild(CHILDCOUNT-2).toString().equals("break")){
+			breaknode = (TerminalNode) ctx.getChild(CHILDCOUNT-2);
+			stmt = new Case_Statement(casenode, caseVal, stmts, breaknode);
+			return stmt;
+		}
+		stmt = new Case_Statement(casenode, caseVal, stmts);
+		return stmt;
+	}
+	
+	@Override
+	public Default_Statement visitDefault_stmt(MiniCParser.Default_stmtContext ctx) {
+		Default_Statement stmt = null;
+		List<Statement> stmts = new ArrayList();
+		TerminalNode defaultnode = (TerminalNode) ctx.getChild(0);
+		for(int i=2; i<ctx.getChildCount(); i++){
+			Statement statement = visitStmt((MiniCParser.StmtContext) ctx.getChild(i));
+			stmts.add(statement);
+		}
+		stmt = new Default_Statement(defaultnode, stmts);
+		
+		return stmt;
 	}
 
 	@Override
@@ -374,7 +441,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 		List<Expression> exprs = new ArrayList();
 		final int CHILDCOUNT = ctx.getChildCount();
 
-		// ∞¯πÈ
+		// Í≥µÎ∞±
 		if (CHILDCOUNT == 0) {
 			args = new Arguments();
 		}
