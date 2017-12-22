@@ -511,6 +511,13 @@ public class UcodeGenVisitor implements ASTVisitor {
 			UCode += ELEVEN_SPACE + "lda " + arrayVariable[0] + " " + arrayVariable[1] + "\n";
 			UCode += ELEVEN_SPACE + "add\n";
 
+			// 배열크기 expr이 정수형인지 확인
+			int exprType = LhsRhsExprType.remove(lhs);
+			if (exprType == IS_FLOAT_OR_DOUBLE_SCALAR || exprType == IS_FLOAT_OR_DOUBLE_ARRAY) {
+				throwsError(node.toString(), "배열의 크기는 정수여야 합니다.");
+				System.exit(1);
+			}
+			
 			visitExpr(rhs);
 			UCode += ELEVEN_SPACE + "sti\n";
 		} else if (node instanceof ArefNode) {
