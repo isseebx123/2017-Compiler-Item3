@@ -52,6 +52,18 @@ public class UcodeGenVisitor implements ASTVisitor {
 		return "$$" + (LabelNumber++);
 	}
 
+	// Expr에서 lhs와 rhs의 타입을 비교하는 메소드
+	private boolean ExprTypeCheck(Expression lhs, Expression rhs) {
+		final int lhsType = LhsRhsExprType.remove(lhs);
+		final int rhsType = LhsRhsExprType.remove(rhs);
+
+		return ((lhsType == IS_INT_SCALAR || lhsType == IS_INT_ARRAY)
+				&& (rhsType == IS_INT_SCALAR || rhsType == IS_INT_ARRAY))
+				|| ((lhsType == IS_FLOAT_OR_DOUBLE_SCALAR || lhsType == IS_FLOAT_OR_DOUBLE_ARRAY)
+						&& (rhsType == IS_FLOAT_OR_DOUBLE_SCALAR || rhsType == IS_FLOAT_OR_DOUBLE_ARRAY)) ? true
+								: false;
+	}
+
 	// decl_assign에서 할당하는 값과 변수의 타입을 전달받아, 적절한 할당문인지 타입을 체크하는 메소드
 	private int doAssignTypeCheck(String literal, int Type) {
 		// rhs 정수인지 정수가 아닌 실수인지 판별
@@ -526,6 +538,12 @@ public class UcodeGenVisitor implements ASTVisitor {
 			visitExpr(lhs);
 			visitExpr(rhs);
 
+			if ((op.equals("+") || op.equals("-") || op.equals("/") || op.equals("*") || op.equals("%"))
+					&& ExprTypeCheck(lhs, rhs) == false) {
+				// Type Check result == failed
+				throwsError(node.toString(), "연산하는 Expr간의 타입이 서로 다릅니다.");
+			}
+
 			if (op.equals("*")) {
 				UCode += ELEVEN_SPACE + "mul\n";
 			} else if (op.equals("/")) {
@@ -574,19 +592,29 @@ public class UcodeGenVisitor implements ASTVisitor {
 			String terminal = n.t_node.getText();
 
 			int Variable[] = getVariableWithShortestScope(terminal);
-			// Input this node's type For Type Checking
-			LhsRhsExprType.put(node, Variable[2]);
 
 			if (Variable != null) {
 				// IDENT
+				LhsRhsExprType.put(node, Variable[2]); // 타입체크를 위해, Expr의 타입을 삽입
+
 				if (Variable[2] == IS_INT_SCALAR)
 					UCode += ELEVEN_SPACE + "lod " + Variable[0] + " " + Variable[1] + "\n";
 				else if (Variable[2] == IS_INT_ARRAY)
 					UCode += ELEVEN_SPACE + "lda " + Variable[0] + " " + Variable[1] + "\n";
+			} else {
+				// LITERAL
+				UCode += ELEVEN_SPACE + "ldc " + terminal + "\n";
+
+				// 타입체크를 위해, Expr의 타입을 삽입
+				int Type;
+				Float floatNum = Float.parseFloat(terminal);
+				if (floatNum - Math.ceil(floatNum) == 0) {
+					Type = IS_INT_SCALAR;
+				} else {
+					Type = IS_FLOAT_OR_DOUBLE_SCALAR;
+				}
+				LhsRhsExprType.put(node, Type);
 			}
-			
-			// LITERAL
-			UCode += ELEVEN_SPACE + "ldc " + terminal + "\n";
 		} else if (node instanceof UnaryOpNode) {
 			// op expr
 			UnaryOpNode n = (UnaryOpNode) node;
