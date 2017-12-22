@@ -17,6 +17,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 	/* Value */
 	private final int GLOBAL_VARIABLE_BASE = 1; // 글로벌변수의 베이스
 	private final int LOCAL_VARIABLE_BASE = 2; // 로컬변수의 베이스
+
+	private final boolean ItsArray = true;
+	private final boolean ItsNotArray = false;
 	private final int IS_INT_ARRAY = 1; // 변수가 배열이면 1
 	private final int IS_INT_SCALAR = 0; // 변수가 배열이 아니면 0
 	private final int IS_FLOAT_OR_DOUBLE_ARRAY = 2; // 변수가 배열이면 1
@@ -25,7 +28,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 	/* Variable */
 	private HashMap<String, int[]> LocalVariableMap = new HashMap<>();
 	private HashMap<String, int[]> GlobalVariableMap = new HashMap<>();
-	// <lhs, [base, offset, ISARRAY or ISNOTARRAY]>
+	// <lhs, [base, offset, Type]>
 	private int LocalVariableOffset = 1;
 	private int GlobalVariableOffset = 1;
 	private int GlobalVariableNum;
@@ -46,6 +49,23 @@ public class UcodeGenVisitor implements ASTVisitor {
 		return "$$" + (LabelNumber++);
 	}
 
+	// 타입 번호를 가져오는 메소드
+	private int getTypeNumber(TypeSpecification.Type type, boolean isArray) {
+		int Type;
+		if (isArray) {
+			// 타입 결정 (배열)
+			Type = IS_INT_ARRAY;
+			if (type == (TypeSpecification.Type.FLOAT) || type == (TypeSpecification.Type.DOUBLE))
+				Type = IS_FLOAT_OR_DOUBLE_ARRAY;
+		} else {
+			// 타입 결정 (스칼라)
+			Type = IS_INT_SCALAR;
+			if (type == (TypeSpecification.Type.FLOAT) || type == (TypeSpecification.Type.DOUBLE))
+				Type = IS_FLOAT_OR_DOUBLE_SCALAR;
+		}
+		return Type;
+	}
+
 	private String getNewBasicBlock() {
 		return "<bb " + (++BasicBlockCount) + ">";
 	}
@@ -54,14 +74,14 @@ public class UcodeGenVisitor implements ASTVisitor {
 		return "<bb " + BBNum + ">";
 	}
 
-	private void throwsError(String errMsg, String reason){
+	private void throwsError(String errMsg, String reason) {
 		System.out.println("컴파일에러: " + reason);
 		System.out.println("===============================");
 		System.out.println(errMsg);
 		System.out.println("===============================");
 		System.exit(1);
 	}
-	
+
 	// 남은 공백 문자열을 받아오는 메소드
 	private String getSpace(int curNum) {
 		return ELEVEN_SPACE.substring(0, 11 - curNum);
@@ -105,24 +125,26 @@ public class UcodeGenVisitor implements ASTVisitor {
 	@Override
 	public void visitVar_decl(Variable_Declaration node) {
 		final String FieldName = node.lhs.getText();
-		int fieldSize = 1, isArray = IS_INT_SCALAR;
+		int fieldSize = 1, Type;
 
 		// 배열의 경우 Size 및 배열여부를 설정
 		if (node instanceof Variable_Declaration_Array) {
 			// 배열의 크기가 정수형인지 확인
-			try{
+			try {
 				fieldSize = Integer.parseInt(((Variable_Declaration_Array) node).rhs.getText());
-			}
-			catch(Exception e) {
+			} catch (Exception e) {
 				throwsError(((Variable_Declaration_Array) node).toString(), "배열의 크기는 정수이어야 합니다.");
 			}
-			System.out.println("((Variable_Declaration_Array) node).type.toString(): "+ ((Variable_Declaration_Array) node).type.toString());
-			isArray = IS_INT_ARRAY;
+			// 타입 결정 (배열)
+			Type = getTypeNumber(((Variable_Declaration_Array) node).type.type, ItsArray);
+		} else {
+			// 타입 결정 (스칼라)
+			Type = getTypeNumber(((Variable_Declaration) node).type.type, ItsNotArray);
 		}
 
 		UCode += ELEVEN_SPACE + "sym " + GLOBAL_VARIABLE_BASE + " " + GlobalVariableOffset + " " + fieldSize + "\n";
 		// 맵에 변수추가, Offset 조정
-		GlobalVariableMap.put(FieldName, new int[] { GLOBAL_VARIABLE_BASE, GlobalVariableOffset, isArray });
+		GlobalVariableMap.put(FieldName, new int[] { GLOBAL_VARIABLE_BASE, GlobalVariableOffset, Type });
 		GlobalVariableOffset += fieldSize;
 
 		// 할당선언의 경우 assign문 삽입
@@ -161,9 +183,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 		for (Local_Declaration decl : decls) {
 			if (decl instanceof Local_Variable_Declaration_Array) { // 배열의 경우
 				String arraySize = ((Local_Variable_Declaration_Array) decl).rhs.getText();
-				try{
-				fieldSize += Integer.parseInt(arraySize);
-				} catch(Exception e) {
+				try {
+					fieldSize += Integer.parseInt(arraySize);
+				} catch (Exception e) {
 					throwsError(((Local_Variable_Declaration_Array) decl).toString(), "배열의 크기는 정수이어야 합니다.");
 				}
 			} else { // 배열이 아닌 int형인 경우
@@ -210,15 +232,18 @@ public class UcodeGenVisitor implements ASTVisitor {
 	public void visitParam(Parameter node) {
 		TerminalNode t_node = node.t_node;
 
-		int fieldSize = 1, isArray = IS_INT_SCALAR;
+		int fieldSize = 1, Type;
 		if (node instanceof ArrayParameter) {
-			isArray = IS_INT_ARRAY;
+			// 타입 결정 (배열)
+			Type = getTypeNumber(((ArrayParameter) node).type.type, ItsArray);
+		} else {
+			// 타입 결정 (스칼라)
+			Type = getTypeNumber(((ArrayParameter) node).type.type, ItsArray);
 		}
-
 		UCode += ELEVEN_SPACE + "sym " + LOCAL_VARIABLE_BASE + " " + LocalVariableOffset + " " + fieldSize + "\n";
 
 		// 맵에 변수 추가, Offset 조정
-		LocalVariableMap.put(t_node.getText(), new int[] { LOCAL_VARIABLE_BASE, LocalVariableOffset, isArray });
+		LocalVariableMap.put(t_node.getText(), new int[] { LOCAL_VARIABLE_BASE, LocalVariableOffset, Type });
 		LocalVariableOffset += fieldSize;
 	}
 
@@ -325,14 +350,13 @@ public class UcodeGenVisitor implements ASTVisitor {
 	public void visitLocal_decl(Local_Declaration node) {
 		final String FieldName = node.lhs.getText();
 		int fieldSize = 1, isArray = IS_INT_SCALAR;
-		
+
 		// 배열변수 선언의 경우
 		if (node instanceof Local_Variable_Declaration_Array) {
 			// 배열의 크기가 정수형인지 확인
-			try{
+			try {
 				fieldSize = Integer.parseInt(((Local_Variable_Declaration_Array) node).rhs.getText());
-			}
-			catch(Exception e) {
+			} catch (Exception e) {
 				throwsError(((Local_Variable_Declaration_Array) node).toString(), "배열의 크기는 정수이어야 합니다.");
 			}
 			isArray = IS_INT_ARRAY;
