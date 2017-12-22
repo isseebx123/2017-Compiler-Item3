@@ -66,8 +66,12 @@ IDENT  : [a-zA-Z_]
         )*;
 
 
-LITERAL:   DecimalConstant     |   OctalConstant     |   HexadecimalConstant     ;
+LITERAL:   FloatingPointConstant     |   DecimalConstant     |   OctalConstant     |   HexadecimalConstant     ;
 
+FloatingPointConstant
+	:	'0' '.' [0-9]*
+	|	[1-9] [0-9]* '.' [0-9]*
+	;
 
 DecimalConstant
     :   '0'
