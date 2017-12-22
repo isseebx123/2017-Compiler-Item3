@@ -9,7 +9,7 @@ import ASTVisitor.ASTVisitor;
 public class Default_Statement {
 
 	TerminalNode defaultnode;
-	List<Statement> stmts;
+	public List<Statement> stmts;
 	
 	public Default_Statement(TerminalNode defaultnode, List<Statement> stmts){
 		this.defaultnode = defaultnode;

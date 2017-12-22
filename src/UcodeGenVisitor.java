@@ -15,15 +15,15 @@ import Domain.Type_spec.*;
 
 public class UcodeGenVisitor implements ASTVisitor {
 	/* Value */
-	private final int GLOBAL_VARIABLE_BASE = 1; // ±Û·Î¹úº¯¼öÀÇ º£ÀÌ½º
-	private final int LOCAL_VARIABLE_BASE = 2; // ·ÎÄÃº¯¼öÀÇ º£ÀÌ½º
+	private final int GLOBAL_VARIABLE_BASE = 1; // ê¸€ë¡œë²Œë³€ìˆ˜ì˜ ë² ì´ìŠ¤
+	private final int LOCAL_VARIABLE_BASE = 2; // ë¡œì»¬ë³€ìˆ˜ì˜ ë² ì´ìŠ¤
 
 	private final boolean ItsArray = true;
 	private final boolean ItsNotArray = false;
-	private final int IS_INT_ARRAY = 1; // º¯¼ö°¡ ¹è¿­ÀÌ¸é 1
-	private final int IS_INT_SCALAR = 0; // º¯¼ö°¡ ¹è¿­ÀÌ ¾Æ´Ï¸é 0
-	private final int IS_FLOAT_OR_DOUBLE_ARRAY = 2; // º¯¼ö°¡ ¹è¿­ÀÌ¸é 1
-	private final int IS_FLOAT_OR_DOUBLE_SCALAR = 3; // º¯¼ö°¡ ¹è¿­ÀÌ¸é 1
+	private final int IS_INT_ARRAY = 1; // ë³€ìˆ˜ê°€ ë°°ì—´ì´ë©´ 1
+	private final int IS_INT_SCALAR = 0; // ë³€ìˆ˜ê°€ ë°°ì—´ì´ ì•„ë‹ˆë©´ 0
+	private final int IS_FLOAT_OR_DOUBLE_ARRAY = 2; // ë³€ìˆ˜ê°€ ë°°ì—´ì´ë©´ 1
+	private final int IS_FLOAT_OR_DOUBLE_SCALAR = 3; // ë³€ìˆ˜ê°€ ë°°ì—´ì´ë©´ 1
 
 	/* Variable */
 	private HashMap<String, int[]> LocalVariableMap = new HashMap<>();
@@ -47,12 +47,12 @@ public class UcodeGenVisitor implements ASTVisitor {
 	private HashMap<Expression, Integer> LhsRhsExprType = new HashMap<>();
 
 	/* private defined Methods */
-	// »õ·Î¿î ¶óº§ ¹®ÀÚ¿­À» ¹Ş¾Æ¿À´Â ¸Ş¼Òµå
+	// ìƒˆë¡œìš´ ë¼ë²¨ ë¬¸ìì—´ì„ ë°›ì•„ì˜¤ëŠ” ë©”ì†Œë“œ
 	private String getNewLabel() {
 		return "$$" + (LabelNumber++);
 	}
 
-	// Expr¿¡¼­ lhs¿Í rhsÀÇ Å¸ÀÔÀ» ºñ±³ÇÏ´Â ¸Ş¼Òµå
+	// Exprì—ì„œ lhsì™€ rhsì˜ íƒ€ì…ì„ ë¹„êµí•˜ëŠ” ë©”ì†Œë“œ
 	private boolean ExprTypeCheck(Expression lhs, Expression rhs) {
 		final int lhsType = LhsRhsExprType.remove(lhs);
 		final int rhsType = LhsRhsExprType.remove(rhs);
@@ -64,9 +64,8 @@ public class UcodeGenVisitor implements ASTVisitor {
 								: false;
 	}
 
-	// decl_assign¿¡¼­ ÇÒ´çÇÏ´Â °ª°ú º¯¼öÀÇ Å¸ÀÔÀ» Àü´Ş¹Ş¾Æ, ÀûÀıÇÑ ÇÒ´ç¹®ÀÎÁö Å¸ÀÔÀ» Ã¼Å©ÇÏ´Â ¸Ş¼Òµå
+	// decl_assignì—ì„œ í• ë‹¹í•˜ëŠ” ê°’ê³¼ ë³€ìˆ˜ì˜ íƒ€ì…ì„ ì „ë‹¬ë°›ì•„, ì ì ˆí•œ í• ë‹¹ë¬¸ì¸ì§€ íƒ€ì…ì„ ì²´í¬í•˜ëŠ” ë©”ì†Œë“œ
 	private int doAssignTypeCheck(String literal, int Type) {
-		// rhs Á¤¼öÀÎÁö Á¤¼ö°¡ ¾Æ´Ñ ½Ç¼öÀÎÁö ÆÇº°
 		boolean isIntNumber = !literal.contains(".");
 
 		if (isIntNumber && Type == IS_INT_SCALAR) {
@@ -77,16 +76,16 @@ public class UcodeGenVisitor implements ASTVisitor {
 		return -1;
 	}
 
-	// Å¸ÀÔ ¹øÈ£¸¦ °¡Á®¿À´Â ¸Ş¼Òµå
+	// íƒ€ì… ë²ˆí˜¸ë¥¼ ê°€ì ¸ì˜¤ëŠ” ë©”ì†Œë“œ
 	private int getTypeNumber(TypeSpecification.Type type, boolean isArray) {
 		int Type;
 		if (isArray) {
-			// Å¸ÀÔ °áÁ¤ (¹è¿­)
+			// íƒ€ì… ê²°ì • (ë°°ì—´)
 			Type = IS_INT_ARRAY;
 			if (type == (TypeSpecification.Type.FLOAT) || type == (TypeSpecification.Type.DOUBLE))
 				Type = IS_FLOAT_OR_DOUBLE_ARRAY;
 		} else {
-			// Å¸ÀÔ °áÁ¤ (½ºÄ®¶ó)
+			// íƒ€ì… ê²°ì • (ìŠ¤ì¹¼ë¼)
 			Type = IS_INT_SCALAR;
 			if (type == (TypeSpecification.Type.FLOAT) || type == (TypeSpecification.Type.DOUBLE))
 				Type = IS_FLOAT_OR_DOUBLE_SCALAR;
@@ -103,19 +102,19 @@ public class UcodeGenVisitor implements ASTVisitor {
 	}
 
 	private void throwsError(String errMsg, String reason) {
-		System.out.println("ÄÄÆÄÀÏ¿¡·¯: " + reason);
+		System.out.println("ì»´íŒŒì¼ì—ëŸ¬: " + reason);
 		System.out.println("===============================");
 		System.out.println(errMsg);
 		System.out.println("===============================");
 		System.exit(1);
 	}
 
-	// ³²Àº °ø¹é ¹®ÀÚ¿­À» ¹Ş¾Æ¿À´Â ¸Ş¼Òµå
+	// ë‚¨ì€ ê³µë°± ë¬¸ìì—´ì„ ë°›ì•„ì˜¤ëŠ” ë©”ì†Œë“œ
 	private String getSpace(int curNum) {
 		return ELEVEN_SPACE.substring(0, 11 - curNum);
 	}
 
-	// ·ÎÄÃº¯¼öºÎÅÍ ¸ÕÀúº¸°í, ±Û·Î¹úº¯¼ö¸¦ º¸´Â ¸Ş¼Òµå
+	// ë¡œì»¬ë³€ìˆ˜ë¶€í„° ë¨¼ì €ë³´ê³ , ê¸€ë¡œë²Œë³€ìˆ˜ë¥¼ ë³´ëŠ” ë©”ì†Œë“œ
 	private int[] getVariableWithShortestScope(String s) {
 		int res[] = LocalVariableMap.get(s);
 		return (res != null ? res : GlobalVariableMap.get(s));
@@ -155,37 +154,37 @@ public class UcodeGenVisitor implements ASTVisitor {
 		final String FieldName = node.lhs.getText();
 		int fieldSize = 1, Type;
 
-		// ¹è¿­ÀÇ °æ¿ì Size ¹× ¹è¿­¿©ºÎ¸¦ ¼³Á¤
+		// ë°°ì—´ì˜ ê²½ìš° Size ë° ë°°ì—´ì—¬ë¶€ë¥¼ ì„¤ì •
 		if (node instanceof Variable_Declaration_Array) {
-			// ¹è¿­ÀÇ Å©±â°¡ Á¤¼öÇüÀÎÁö È®ÀÎ
+			// ë°°ì—´ì˜ í¬ê¸°ê°€ ì •ìˆ˜í˜•ì¸ì§€ í™•ì¸
 			try {
 				fieldSize = Integer.parseInt(((Variable_Declaration_Array) node).rhs.getText());
 			} catch (Exception e) {
-				throwsError(((Variable_Declaration_Array) node).toString(), "¹è¿­ÀÇ Å©±â´Â Á¤¼öÀÌ¾î¾ß ÇÕ´Ï´Ù.");
+				throwsError(((Variable_Declaration_Array) node).toString(), "ë°°ì—´ì˜ í¬ê¸°ëŠ” ì •ìˆ˜ì´ì–´ì•¼ í•©ë‹ˆë‹¤.");
 			}
-			// Å¸ÀÔ °áÁ¤ (¹è¿­)
+			// íƒ€ì… ê²°ì • (ë°°ì—´)
 			Type = getTypeNumber(node.type.type, ItsArray);
 		} else {
-			// Å¸ÀÔ °áÁ¤ (½ºÄ®¶ó)
+			// íƒ€ì… ê²°ì • (ìŠ¤ì¹¼ë¼)
 			Type = getTypeNumber(node.type.type, ItsNotArray);
 		}
 
 		UCode += ELEVEN_SPACE + "sym " + GLOBAL_VARIABLE_BASE + " " + GlobalVariableOffset + " " + fieldSize + "\n";
-		// ¸Ê¿¡ º¯¼öÃß°¡, Offset Á¶Á¤
+		// ë§µì— ë³€ìˆ˜ì¶”ê°€, Offset ì¡°ì •
 		GlobalVariableMap.put(FieldName, new int[] { GLOBAL_VARIABLE_BASE, GlobalVariableOffset, Type });
 		GlobalVariableOffset += fieldSize;
 
-		// ÇÒ´ç¼±¾ğÀÇ °æ¿ì assign¹® »ğÀÔ
+		// í• ë‹¹ì„ ì–¸ì˜ ê²½ìš° assignë¬¸ ì‚½ì…
 		if (node instanceof Variable_Declaration_Assign) {
 			String literal = ((Variable_Declaration_Assign) node).rhs.getText();
-			// rhs Á¤¼öÀÎÁö Á¤¼ö°¡ ¾Æ´Ñ ½Ç¼öÀÎÁö ÆÇº°
+			// rhs ì •ìˆ˜ì¸ì§€ ì •ìˆ˜ê°€ ì•„ë‹Œ ì‹¤ìˆ˜ì¸ì§€ íŒë³„
 			Double floatNum = 0.0;
 			int intNum = 0;
 
 			// Type checking
 			int typeCheckResult = doAssignTypeCheck(literal, Type);
 			if (typeCheckResult == -1) {
-				throwsError(node.toString(), "º¯¼öÀÇ Å¸ÀÔ°ú ÇÒ´çÇÏ´Â °ªÀÇ Å¸ÀÔÀÌ ¼­·Î ´Ù¸¨´Ï´Ù.");
+				throwsError(node.toString(), "ë³€ìˆ˜ì˜ íƒ€ì…ê³¼ í• ë‹¹í•˜ëŠ” ê°’ì˜ íƒ€ì…ì´ ì„œë¡œ ë‹¤ë¦…ë‹ˆë‹¤.");
 				System.exit(1);
 			} else if (typeCheckResult == IS_INT_SCALAR) {
 				intNum = Integer.parseInt(literal);
@@ -201,47 +200,47 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public void visitType_spec(TypeSpecification node) {
-		// ±¸ÇöÇÒ »çÇ×ÀÌ ¾øÀ½
+		// êµ¬í˜„í•  ì‚¬í•­ì´ ì—†ìŒ
 	}
 
 	@Override
 	public void visitFun_decl(Function_Declaration node) {
-		String funcName = node.t_node.toString(); // ÇÔ¼öÀÌ¸§
+		String funcName = node.t_node.toString(); // í•¨ìˆ˜ì´ë¦„
 		List<Local_Declaration> decls = node.compount_stmt.local_decls;
 		List<Parameter> params = node.params.params;
 		final int paramsSize = (params != null ? params.size() : 0);
 
-		// º¯¼öÀÇ Å©±â¸¦ °è»ê
+		// ë³€ìˆ˜ì˜ í¬ê¸°ë¥¼ ê³„ì‚°
 		int fieldSize = 0;
 		for (Local_Declaration decl : decls) {
-			if (decl instanceof Local_Variable_Declaration_Array) { // ¹è¿­ÀÇ °æ¿ì
+			if (decl instanceof Local_Variable_Declaration_Array) { // ë°°ì—´ì˜ ê²½ìš°
 				String arraySize = ((Local_Variable_Declaration_Array) decl).rhs.getText();
 				try {
 					fieldSize += Integer.parseInt(arraySize);
 				} catch (Exception e) {
-					throwsError(((Local_Variable_Declaration_Array) decl).toString(), "¹è¿­ÀÇ Å©±â´Â Á¤¼öÀÌ¾î¾ß ÇÕ´Ï´Ù.");
+					throwsError(((Local_Variable_Declaration_Array) decl).toString(), "ë°°ì—´ì˜ í¬ê¸°ëŠ” ì •ìˆ˜ì´ì–´ì•¼ í•©ë‹ˆë‹¤.");
 				}
-			} else { // ¹è¿­ÀÌ ¾Æ´Ñ intÇüÀÎ °æ¿ì
+			} else { // ë°°ì—´ì´ ì•„ë‹Œ intí˜•ì¸ ê²½ìš°
 				fieldSize++;
 			}
 		}
-		// ÆÄ¶ó¹ÌÅÍÀÇ Å©±â¸¦ °è»ê, ¹è¿­ÀÇ °æ¿ìµµ 1·Î »ı°¢ÇÔ
+		// íŒŒë¼ë¯¸í„°ì˜ í¬ê¸°ë¥¼ ê³„ì‚°, ë°°ì—´ì˜ ê²½ìš°ë„ 1ë¡œ ìƒê°í•¨
 		fieldSize += paramsSize;
 
 		// main proc 5 2 2, sym 2 1 1, ...
 		UCode += funcName + getSpace(funcName.length()) + "proc " + fieldSize + " 2 2\n";
 
-		// ·ÎÄÃº¯¼ö ÀÌÀü¿¡ ÆÄ¶ó¹ÌÅÍ¿¡ ´ëÇØ Á¤ÀÇ
+		// ë¡œì»¬ë³€ìˆ˜ ì´ì „ì— íŒŒë¼ë¯¸í„°ì— ëŒ€í•´ ì •ì˜
 		visitParams(node.params);
 
-		// ·ÎÄÃº¯¼ö Á¤ÀÇ ¹× stmt¼öÇà
+		// ë¡œì»¬ë³€ìˆ˜ ì •ì˜ ë° stmtìˆ˜í–‰
 		visitCompound_stmt(node.compount_stmt);
 
-		// ¸Ê¿¡¼­ ÆÄ¶ó¹ÌÅÍ º¯¼ö¸¦ ¸ğµÎ Á¦°Å
+		// ë§µì—ì„œ íŒŒë¼ë¯¸í„° ë³€ìˆ˜ë¥¼ ëª¨ë‘ ì œê±°
 		LocalVariableMap.clear();
 		LocalVariableOffset = 1;
 
-		// ÇÔ¼ö Á¾·á (void¸¸ Ã³¸®, int´Â return¹®¿¡¼­ Ã³¸®)
+		// í•¨ìˆ˜ ì¢…ë£Œ (voidë§Œ ì²˜ë¦¬, intëŠ” returnë¬¸ì—ì„œ ì²˜ë¦¬)
 		if (node.type.type.toString().equals("VOID")) {
 			UCode += ELEVEN_SPACE + "ret\n";
 			UCode += ELEVEN_SPACE + "end\n";
@@ -253,7 +252,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 	public void visitParams(Parameters node) {
 		List<Parameter> params = node.params;
 
-		// °ø¹éÀÌ°Å³ª VOIDÀÎ °æ¿ì´Â »ı·«
+		// ê³µë°±ì´ê±°ë‚˜ VOIDì¸ ê²½ìš°ëŠ” ìƒëµ
 		if (params != null) {
 			for (Parameter p : params) {
 				visitParam(p);
@@ -267,15 +266,15 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 		int fieldSize = 1, Type;
 		if (node instanceof ArrayParameter) {
-			// Å¸ÀÔ °áÁ¤ (¹è¿­)
+			// íƒ€ì… ê²°ì • (ë°°ì—´)
 			Type = getTypeNumber(node.type.type, ItsArray);
 		} else {
-			// Å¸ÀÔ °áÁ¤ (½ºÄ®¶ó)
+			// íƒ€ì… ê²°ì • (ìŠ¤ì¹¼ë¼)
 			Type = getTypeNumber(node.type.type, ItsArray);
 		}
 		UCode += ELEVEN_SPACE + "sym " + LOCAL_VARIABLE_BASE + " " + LocalVariableOffset + " " + fieldSize + "\n";
 
-		// ¸Ê¿¡ º¯¼ö Ãß°¡, Offset Á¶Á¤
+		// ë§µì— ë³€ìˆ˜ ì¶”ê°€, Offset ì¡°ì •
 		LocalVariableMap.put(t_node.getText(), new int[] { LOCAL_VARIABLE_BASE, LocalVariableOffset, Type });
 		LocalVariableOffset += fieldSize;
 	}
@@ -294,13 +293,15 @@ public class UcodeGenVisitor implements ASTVisitor {
 			visitWhile_stmt((While_Statement) node);
 		} else if (node instanceof For_Statement) {
 			visitFor_stmt((For_Statement) node);
+		} else if (node instanceof Switch_Statement) {
+			visitSwitch_stmt((Switch_Statement) node);
 		}
 	}
 
 	@Override
 	public void visitExpr_stmt(Expression_Statement node) {
 		visitExpr(node.expr);
-		LhsRhsExprType.clear(); // expr¿¡¼­ »ç¿ëµÈ ÇØ½¬¸ÊÀ» ÃÊ±âÈ­
+		LhsRhsExprType.clear(); // exprì—ì„œ ì‚¬ìš©ëœ í•´ì‰¬ë§µì„ ì´ˆê¸°í™”
 	}
 
 	@Override
@@ -320,7 +321,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 		UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 		int BBEndNumber = BasicBlockCount;
 
-		UCode += getNewBasicBlock() + ":\n"; // BBLeader: ºê·£Ä¡ Á÷ÈÄ
+		UCode += getNewBasicBlock() + ":\n"; // BBLeader: ë¸Œëœì¹˜ ì§í›„
 		visitStmt(stmt);
 		UCode += ELEVEN_SPACE + "ujp " + startLabel + "\n";
 		UCode += ELEVEN_SPACE + "goto " + getThisBasicBlock(BBStartNumber) + "\n";
@@ -348,7 +349,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 		UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
 		UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 		int BBEndNumber = BasicBlockCount;
-		UCode += getNewBasicBlock() + ":\n"; // BBLeader: ºê·£Ä¡ Á÷ÈÄ
+		UCode += getNewBasicBlock() + ":\n"; // BBLeader: ë¸Œëœì¹˜ ì§í›„
 
 		visitStmt(stmt);
 		visitExpr(Rexpr);
@@ -363,17 +364,17 @@ public class UcodeGenVisitor implements ASTVisitor {
 		List<Local_Declaration> decls = node.local_decls;
 		List<Statement> stmts = node.stmts;
 
-		// localº¯¼ö Ã³¸®
+		// localë³€ìˆ˜ ì²˜ë¦¬
 		for (Local_Declaration decl : decls) {
 			visitLocal_decl(decl);
 		}
 
-		// stmt Ã³¸®
+		// stmt ì²˜ë¦¬
 		for (Statement stmt : stmts) {
 			visitStmt(stmt);
 		}
 
-		// compound_stmt Á¾·á ÀÌÈÄ ¸Ê¿¡¼­ local º¯¼ö¸¦ Á¦°Å, offset °¨¼Ò
+		// compound_stmt ì¢…ë£Œ ì´í›„ ë§µì—ì„œ local ë³€ìˆ˜ë¥¼ ì œê±°, offset ê°ì†Œ
 		for (Local_Declaration decl : decls) {
 			int Variable[] = LocalVariableMap.remove(decl.lhs.getText());
 			LocalVariableOffset = Math.min(LocalVariableOffset, Variable[1]);
@@ -385,37 +386,37 @@ public class UcodeGenVisitor implements ASTVisitor {
 		final String FieldName = node.lhs.getText();
 		int fieldSize = 1, Type;
 
-		// ¹è¿­º¯¼ö ¼±¾ğÀÇ °æ¿ì
+		// ë°°ì—´ë³€ìˆ˜ ì„ ì–¸ì˜ ê²½ìš°
 		if (node instanceof Local_Variable_Declaration_Array) {
-			// ¹è¿­ÀÇ Å©±â°¡ Á¤¼öÇüÀÎÁö È®ÀÎ
+			// ë°°ì—´ì˜ í¬ê¸°ê°€ ì •ìˆ˜í˜•ì¸ì§€ í™•ì¸
 			try {
 				fieldSize = Integer.parseInt(((Local_Variable_Declaration_Array) node).rhs.getText());
 			} catch (Exception e) {
-				throwsError(((Local_Variable_Declaration_Array) node).toString(), "¹è¿­ÀÇ Å©±â´Â Á¤¼öÀÌ¾î¾ß ÇÕ´Ï´Ù.");
+				throwsError(((Local_Variable_Declaration_Array) node).toString(), "ë°°ì—´ì˜ í¬ê¸°ëŠ” ì •ìˆ˜ì´ì–´ì•¼ í•©ë‹ˆë‹¤.");
 			}
-			// Å¸ÀÔ °áÁ¤ (¹è¿­)
+			// íƒ€ì… ê²°ì • (ë°°ì—´)
 			Type = getTypeNumber(node.type.type, ItsArray);
 		} else {
-			// Å¸ÀÔ °áÁ¤ (½ºÄ®¶ó)
+			// íƒ€ì… ê²°ì • (ìŠ¤ì¹¼ë¼)
 			Type = getTypeNumber(node.type.type, ItsNotArray);
 		}
 
 		UCode += ELEVEN_SPACE + "sym " + LOCAL_VARIABLE_BASE + " " + LocalVariableOffset + " " + fieldSize + "\n";
-		// ¸Ê¿¡ º¯¼ö Ãß°¡, Offset Á¶Á¤
+		// ë§µì— ë³€ìˆ˜ ì¶”ê°€, Offset ì¡°ì •
 		LocalVariableMap.put(FieldName, new int[] { LOCAL_VARIABLE_BASE, LocalVariableOffset, Type });
 		LocalVariableOffset += fieldSize;
 
-		// ÇÒ´ç¼±¾ğÀÇ °æ¿ì ÇÒ´ç¹® ÇÊ¿ä
+		// í• ë‹¹ì„ ì–¸ì˜ ê²½ìš° í• ë‹¹ë¬¸ í•„ìš”
 		if (node instanceof Local_Variable_Declaration_Assign) {
 			String literal = ((Local_Variable_Declaration_Assign) node).rhs.getText();
-			// rhs Á¤¼öÀÎÁö Á¤¼ö°¡ ¾Æ´Ñ ½Ç¼öÀÎÁö ÆÇº°
+			// rhs ì •ìˆ˜ì¸ì§€ ì •ìˆ˜ê°€ ì•„ë‹Œ ì‹¤ìˆ˜ì¸ì§€ íŒë³„
 			Double floatNum = 0.0;
 			int intNum = 0;
 
 			// Type checking
 			int typeCheckResult = doAssignTypeCheck(literal, Type);
 			if (typeCheckResult == -1) {
-				throwsError(node.toString(), "º¯¼öÀÇ Å¸ÀÔ°ú ÇÒ´çÇÏ´Â °ªÀÇ Å¸ÀÔÀÌ ¼­·Î ´Ù¸¨´Ï´Ù.");
+				throwsError(node.toString(), "ë³€ìˆ˜ì˜ íƒ€ì…ê³¼ í• ë‹¹í•˜ëŠ” ê°’ì˜ íƒ€ì…ì´ ì„œë¡œ ë‹¤ë¦…ë‹ˆë‹¤.");
 				System.exit(1);
 			} else if (typeCheckResult == IS_INT_SCALAR) {
 				intNum = Integer.parseInt(literal);
@@ -442,7 +443,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
 			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 			int BBEndNumber = BasicBlockCount;
-			UCode += getNewBasicBlock() + ":\n"; // BBLeader: ºê·£Ä¡ Á÷ÈÄ
+			UCode += getNewBasicBlock() + ":\n"; // BBLeader: ë¸Œëœì¹˜ ì§í›„
 
 			visitStmt(stmt1);
 
@@ -458,7 +459,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			UCode += ELEVEN_SPACE + "fjp " + elseLabel + "\n";
 			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 			int BBElseNumber = BasicBlockCount;
-			UCode += getNewBasicBlock() + ":\n"; // BBLeader: ºê·£Ä¡ Á÷ÈÄ
+			UCode += getNewBasicBlock() + ":\n"; // BBLeader: ë¸Œëœì¹˜ ì§í›„
 
 			visitStmt(stmt1);
 			UCode += ELEVEN_SPACE + "ujp " + endLabel + "\n";
@@ -467,7 +468,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 			// else label
 			// <BB Else>: target
-			// ºê·£Ä¡ Á÷ÈÄÀÇ instruction°ú °ãÄ§. º£ÀÌÁ÷ºí·Ï ÇÏ³ª¸¸ ÀÛ¼º
+			// ë¸Œëœì¹˜ ì§í›„ì˜ instructionê³¼ ê²¹ì¹¨. ë² ì´ì§ë¸”ë¡ í•˜ë‚˜ë§Œ ì‘ì„±
 			UCode += getThisBasicBlock(BBElseNumber) + ":\n";
 			UCode += elseLabel + getSpace(elseLabel.length()) + "nop\n";
 
@@ -483,9 +484,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 	@Override
 	public void visitReturn_stmt(Return_Statement node) {
 		Expression expr = node.expr;
-		visitExpr(expr); // ½ºÅÃ¿¡ pushÇÏ´Â °Í±îÁö Æ÷ÇÔÇÑ´Ù°í »ı°¢.
+		visitExpr(expr); // ìŠ¤íƒì— pushí•˜ëŠ” ê²ƒê¹Œì§€ í¬í•¨í•œë‹¤ê³  ìƒê°.
 
-		// ÇÔ¼ö Á¾·á (int¸¸ Ã³¸®, void´Â func_decl¿¡¼­ Ã³¸®)
+		// í•¨ìˆ˜ ì¢…ë£Œ (intë§Œ ì²˜ë¦¬, voidëŠ” func_declì—ì„œ ì²˜ë¦¬)
 		UCode += ELEVEN_SPACE + "retv\n";
 		UCode += ELEVEN_SPACE + "end\n";
 	}
@@ -500,7 +501,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			Expression rhs = n.rhs;
 			int arrayVariable[] = getVariableWithShortestScope(t_node.getText());
 
-			// °á°ú°¡ ½ºÅÃ¿¡ µé¾îÀÖ´Ù°í »ı°¢. LITERAL|IDENT¿¡¼­ Ã³¸®.
+			// ê²°ê³¼ê°€ ìŠ¤íƒì— ë“¤ì–´ìˆë‹¤ê³  ìƒê°. LITERAL|IDENTì—ì„œ ì²˜ë¦¬.
 			visitExpr(lhs);
 			UCode += ELEVEN_SPACE + "lda " + arrayVariable[0] + " " + arrayVariable[1] + "\n";
 			UCode += ELEVEN_SPACE + "add\n";
@@ -516,10 +517,10 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 			visitExpr(expr);
 			
-			// ¹è¿­Å©±â exprÀÌ Á¤¼öÇüÀÎÁö È®ÀÎ 
+			// ï¿½è¿­Å©ï¿½ï¿½ exprï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ 
 			int exprType = LhsRhsExprType.remove(expr);
 			if (exprType == IS_FLOAT_OR_DOUBLE_SCALAR || exprType == IS_FLOAT_OR_DOUBLE_ARRAY) {
-				throwsError(node.toString(), "¹è¿­ÀÇ Å©±â´Â Á¤¼ö¿©¾ß ÇÕ´Ï´Ù.");
+				throwsError(node.toString(), "ï¿½è¿­ï¿½ï¿½ Å©ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Õ´Ï´ï¿½.");
 				System.exit(1);
 			}
 			
@@ -545,9 +546,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 			if ((op.equals("+") || op.equals("-") || op.equals("/") || op.equals("*") || op.equals("%"))
 					&& ExprTypeCheck(lhs, rhs) == false) {
 				// Type Check result == failed
-				throwsError(node.toString(), "¿¬»êÇÏ´Â Expr°£ÀÇ Å¸ÀÔÀÌ ¼­·Î ´Ù¸¨´Ï´Ù.");
+				throwsError(node.toString(), "ì—°ì‚°í•˜ëŠ” Exprê°„ì˜ íƒ€ì…ì´ ì„œë¡œ ë‹¤ë¦…ë‹ˆë‹¤.");
 			}
-			// Å¸ÀÔÀÌ °°Àº °æ¿ì, ¿¬»ê °á°ú Å¸ÀÔÀ» ÇØ½¬¸Ê¿¡ »ğÀÔ, ³ª´©±â MOD¿¬»êÀº ¾îÄÉ?
+			// Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Ê¿ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ MODï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½?
 			
 			if (op.equals("*")) {
 				UCode += ELEVEN_SPACE + "mul\n";
@@ -591,12 +592,12 @@ public class UcodeGenVisitor implements ASTVisitor {
 			Expression expr = n.expr;
 
 			visitExpr(expr);
-			// ¸¸¾à ÇÏÀ§¿¡¼­ Å¸ÀÔÀ» ¼³Á¤ÇØÁÖ¾úÀ¸¸é »óÀ§¿¡¼­ ÀÚ½ÅÀÇ ³ëµå·Î ´Ù½Ã ¼³Á¤
+			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½
 			if (LhsRhsExprType.containsKey(expr)) {
 				LhsRhsExprType.put(node, LhsRhsExprType.remove(expr));
 			}
 		} else if (node instanceof TerminalExpression) {
-			// 1 ¶Ç´Â x
+			// 1 ë˜ëŠ” x
 			TerminalExpression n = (TerminalExpression) node;
 			String terminal = n.t_node.getText();
 
@@ -604,7 +605,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 			if (Variable != null) {
 				// IDENT
-				LhsRhsExprType.put(node, Variable[2]); // Å¸ÀÔÃ¼Å©¸¦ À§ÇØ, ExprÀÇ Å¸ÀÔÀ» »ğÀÔ
+				LhsRhsExprType.put(node, Variable[2]); // íƒ€ì…ì²´í¬ë¥¼ ìœ„í•´, Exprì˜ íƒ€ì…ì„ ì‚½ì…
 
 				if (Variable[2] == IS_INT_SCALAR)
 					UCode += ELEVEN_SPACE + "lod " + Variable[0] + " " + Variable[1] + "\n";
@@ -614,7 +615,6 @@ public class UcodeGenVisitor implements ASTVisitor {
 				// LITERAL
 				UCode += ELEVEN_SPACE + "ldc " + terminal + "\n";
 
-				// Å¸ÀÔÃ¼Å©¸¦ À§ÇØ, ExprÀÇ Å¸ÀÔÀ» »ğÀÔ
 				int Type = terminal.contains(".") ? IS_FLOAT_OR_DOUBLE_SCALAR : IS_INT_SCALAR;
 				LhsRhsExprType.put(node, Type);
 			}
@@ -625,7 +625,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			Expression expr = n.expr;
 
 			visitExpr(expr);
-			// ¸¸¾à ÇÏÀ§¿¡¼­ Å¸ÀÔÀ» ¼³Á¤ÇØÁÖ¾úÀ¸¸é »óÀ§¿¡¼­ ÀÚ½ÅÀÇ ³ëµå·Î ´Ù½Ã ¼³Á¤
+			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½
 			if (LhsRhsExprType.containsKey(expr)) {
 				LhsRhsExprType.put(node, LhsRhsExprType.remove(expr));
 			}
@@ -646,7 +646,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			String terminal = nn.t_node.getText();
 			int Variable[] = getVariableWithShortestScope(terminal);
 
-			// Variable == nullÀ¸·Î -1 ¶Ç´Â +1°ú °°Àº °æ¿ì(op="+" or "-")´Â ¹èÁ¦
+			// Variable == nullìœ¼ë¡œ -1 ë˜ëŠ” +1ê³¼ ê°™ì€ ê²½ìš°(op="+" or "-")ëŠ” ë°°ì œ
 			if (Variable != null)
 				UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
@@ -661,20 +661,80 @@ public class UcodeGenVisitor implements ASTVisitor {
 		}
 	}
 
+	static String switchEndLabel;
+	static String nextCase;
+	static boolean lastCase;
+	static boolean defaultCase;
 	@Override
 	public void visitSwitch_stmt(Switch_Statement node) {
+
+		TerminalNode ident = node.ident;
+		List<Case_Statement> stmts = node.stmts;
+		Default_Statement defaultnode = node.defaultnode;
+		
+		if (stmts.size() != 0)
+			switchEndLabel = getNewLabel();
+		
+		if(defaultnode != null)
+			defaultCase = true;
+		
+		for(int i=0; i<stmts.size(); i++){
+			int arrayVariable[] = getVariableWithShortestScope(ident.getText());
+			UCode += ELEVEN_SPACE + "lda " + arrayVariable[0] + " " + arrayVariable[1] + "\n";		
+			if(i == stmts.size()-1)
+				lastCase = true;
+			visitCase_stmt(stmts.get(i));
+			if(i != stmts.size()-1)
+				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";	
+			else if( i == stmts.size()-1 && defaultCase == true)
+				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";	
+		}
+		
+		if(defaultCase == true){
+			visitDefault_stmt(defaultnode);
+		}
+		UCode += switchEndLabel + getSpace(switchEndLabel.length()) + "nop\n";
 
 	}
 
 	@Override
 	public void visitCase_stmt(Case_Statement node) {
 
-	}
+		TerminalNode caseVal = node.caseVal;
+		List<Statement> stmts = node.stmts;
+		TerminalNode breaknode = node.breaknode;
+		
+		int Variable[] = getVariableWithShortestScope(caseVal.getText());
+		if (Variable != null) {
+			UCode += ELEVEN_SPACE + "lod " + Variable[0] + " " + Variable[1] + "\n";
+		} else{
+			UCode += ELEVEN_SPACE + "ldc " + caseVal.getText() + "\n";
+		}
+		UCode += ELEVEN_SPACE + "eq\n";
+		if(lastCase == false || defaultCase == true){
+			nextCase = getNewLabel();
+			UCode += ELEVEN_SPACE + "fjp " + nextCase + "\n";
+		} else{
+			UCode += ELEVEN_SPACE + "fjp " + switchEndLabel + "\n";
+		}
+		
+		for(int i=0; i<stmts.size(); i++){
+			visitStmt(stmts.get(i));
+		}
+		
+		if(breaknode != null){
+			UCode += ELEVEN_SPACE + "ujp " + switchEndLabel + "\n";
+		}
+	}	
 
 	@Override
-	public void visitDefault_stmt(Case_Statement node) {
-		// TODO Auto-generated method stub
+	public void visitDefault_stmt(Default_Statement node) {
+		List<Statement> stmts = node.stmts;
+		for(int i=0; i<stmts.size(); i++)
+			visitStmt(stmts.get(i));
+
 
 	}
+
 
 }

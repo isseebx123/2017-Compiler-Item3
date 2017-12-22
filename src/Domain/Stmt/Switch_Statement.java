@@ -8,10 +8,10 @@ import ASTVisitor.ASTVisitor;
 
 public class Switch_Statement extends Statement{
 
-	TerminalNode node;
-	TerminalNode ident;
-	List<Case_Statement> stmts;
-	Default_Statement defaultnode;
+	public TerminalNode node;
+	public TerminalNode ident;
+	public List<Case_Statement> stmts;
+	public Default_Statement defaultnode;
 	
 	public Switch_Statement(TerminalNode node, TerminalNode ident, List<Case_Statement> stmt) {
 		this.node = node;

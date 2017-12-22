@@ -7,3 +7,6 @@ MiniCLexer.tokens
 MiniCListener.java
 MiniCParser.java
 MiniCVisitor.java
+/.gitignore
+/ASTVisitor/
+/Domain/
