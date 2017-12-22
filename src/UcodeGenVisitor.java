@@ -136,10 +136,10 @@ public class UcodeGenVisitor implements ASTVisitor {
 				throwsError(((Variable_Declaration_Array) node).toString(), "배열의 크기는 정수이어야 합니다.");
 			}
 			// 타입 결정 (배열)
-			Type = getTypeNumber(((Variable_Declaration_Array) node).type.type, ItsArray);
+			Type = getTypeNumber(node.type.type, ItsArray);
 		} else {
 			// 타입 결정 (스칼라)
-			Type = getTypeNumber(((Variable_Declaration) node).type.type, ItsNotArray);
+			Type = getTypeNumber(node.type.type, ItsNotArray);
 		}
 
 		UCode += ELEVEN_SPACE + "sym " + GLOBAL_VARIABLE_BASE + " " + GlobalVariableOffset + " " + fieldSize + "\n";
@@ -235,10 +235,10 @@ public class UcodeGenVisitor implements ASTVisitor {
 		int fieldSize = 1, Type;
 		if (node instanceof ArrayParameter) {
 			// 타입 결정 (배열)
-			Type = getTypeNumber(((ArrayParameter) node).type.type, ItsArray);
+			Type = getTypeNumber(node.type.type, ItsArray);
 		} else {
 			// 타입 결정 (스칼라)
-			Type = getTypeNumber(((ArrayParameter) node).type.type, ItsArray);
+			Type = getTypeNumber(node.type.type, ItsArray);
 		}
 		UCode += ELEVEN_SPACE + "sym " + LOCAL_VARIABLE_BASE + " " + LocalVariableOffset + " " + fieldSize + "\n";
 
@@ -349,7 +349,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 	@Override
 	public void visitLocal_decl(Local_Declaration node) {
 		final String FieldName = node.lhs.getText();
-		int fieldSize = 1, isArray = IS_INT_SCALAR;
+		int fieldSize = 1, isArray;
 
 		// 배열변수 선언의 경우
 		if (node instanceof Local_Variable_Declaration_Array) {
@@ -359,9 +359,14 @@ public class UcodeGenVisitor implements ASTVisitor {
 			} catch (Exception e) {
 				throwsError(((Local_Variable_Declaration_Array) node).toString(), "배열의 크기는 정수이어야 합니다.");
 			}
-			isArray = IS_INT_ARRAY;
+			// 타입 결정 (배열)
+			isArray = getTypeNumber(node.type.type, ItsArray);
 		}
-
+		else {
+			// 타입 결정 (스칼라)
+			isArray = getTypeNumber(node.type.type, ItsNotArray);
+		}
+		
 		UCode += ELEVEN_SPACE + "sym " + LOCAL_VARIABLE_BASE + " " + LocalVariableOffset + " " + fieldSize + "\n";
 		// 맵에 변수 추가, Offset 조정
 		LocalVariableMap.put(FieldName, new int[] { LOCAL_VARIABLE_BASE, LocalVariableOffset, isArray });
