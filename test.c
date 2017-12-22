@@ -14,7 +14,7 @@ void main ()
 	}
 
     for( x=0; x<3; x = x+1 ){
-	int z = 1.3;
+	int z = 1;
 	++y;
     }
     
