@@ -24,7 +24,7 @@ hs_err_pid*
 # bin/.class
 bin/
 
-# excute trash files
+# Excute trash files
 build/classes/MiniC.tokens
 src/MiniC.tokens
 src/MiniCBaseListener.java
@@ -34,3 +34,6 @@ src/MiniCLexer.tokens
 src/MiniCListener.java
 src/MiniCParser.java
 src/MiniCVisitor.java
+
+# Test case
+test.c
