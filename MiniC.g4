@@ -1,37 +1,58 @@
 grammar MiniC;
 
 program	: decl+			;
+
 decl		: var_decl		
 		| fun_decl		;
+		
 var_decl	:  type_spec IDENT ';' 
 		| type_spec IDENT '=' LITERAL ';'	
 		| type_spec IDENT '[' LITERAL ']' ';'	;
-type_spec	: VOID			
-		| INT				;
+
+		
+type_spec	: VOID				
+		| INT				
+		| FLOAT
+		| DOUBLE	
+		;
+		
+
 fun_decl	: type_spec IDENT '(' params ')' compound_stmt ;
+
 params		: param (',' param)*		
 		| VOID				
 		|				;
+		
 param		: type_spec IDENT		
 		| type_spec IDENT '[' ']'	;
+		
 stmt		: expr_stmt			
 		| compound_stmt			
 		| if_stmt			
 		| while_stmt	
 		| for_stmt		
 		| return_stmt			;
+		
 expr_stmt	: expr ';'			;
+
 while_stmt	: WHILE '(' expr ')' stmt	;
+
 for_stmt	: FOR '(' expr_stmt expr_stmt expr ')' stmt	;
+
 compound_stmt: '{' local_decl* stmt* '}'	;
+
 local_decl	: type_spec IDENT ';'
 		| type_spec IDENT '='  LITERAL';'	
 		| type_spec IDENT '[' LITERAL ']' ';'	;
+
 if_stmt		: IF '(' expr ')' stmt		
 		| IF '(' expr ')' stmt ELSE stmt 		;
+
 return_stmt	: RETURN ';'			
 		| RETURN expr ';'				;
+
 expr	:  (LITERAL|IDENT)													
+
 	| '(' expr ')'				 							
 	| IDENT '[' expr ']'			 						
 	| IDENT '(' args ')'									
@@ -47,6 +68,10 @@ args	: expr (',' expr)*
 
 VOID: 'void';
 INT: 'int';
+
+FLOAT: 'float';
+DOUBLE: 'double';
+
 
 WHILE: 'while';
 IF: 'if';
@@ -65,7 +90,16 @@ IDENT  : [a-zA-Z_]
         |  [0-9]
         )*;
 
+
 LITERAL:   DecimalConstant     |   OctalConstant     |   HexadecimalConstant     ;
+
+
+LITERAL:   FloatingPointConstant     |   DecimalConstant     |   OctalConstant     |   HexadecimalConstant     ;
+
+FloatingPointConstant
+	:	'0' '.' [0-9]*
+	|	[1-9] [0-9]* '.' [0-9]*
+	;
 
 
 DecimalConstant

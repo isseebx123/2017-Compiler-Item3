@@ -52,6 +52,14 @@ public class UcodeGenVisitor implements ASTVisitor {
 		return "<bb " + BBNum + ">";
 	}
 
+	private void throwsError(String errMsg, String reason) {
+		System.out.println("컴파일에러: " + reason);
+		System.out.println("===============================");
+		System.out.println(errMsg);
+		System.out.println("===============================");
+		System.exit(1);
+	}
+
 	// 남은 공백 문자열을 받아오는 메소드
 	private String getSpace(int curNum) {
 		return ELEVEN_SPACE.substring(0, 11 - curNum);
@@ -99,7 +107,12 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 		// 배열의 경우 Size 및 배열여부를 설정
 		if (node instanceof Variable_Declaration_Array) {
-			fieldSize = Integer.parseInt(((Variable_Declaration_Array) node).rhs.getText());
+			// 배열의 크기가 정수형인지 확인
+			try {
+				fieldSize = Integer.parseInt(((Variable_Declaration_Array) node).rhs.getText());
+			} catch (Exception e) {
+				throwsError(((Variable_Declaration_Array) node).toString(), "배열의 크기는 정수이어야 합니다.");
+			}
 			isArray = ISARRAY;
 		}
 
@@ -110,9 +123,19 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 		// 할당선언의 경우 assign문 삽입
 		if (node instanceof Variable_Declaration_Assign) {
-			int num = Integer.parseInt(((Variable_Declaration_Assign) node).rhs.getText());
+			String literal = ((Variable_Declaration_Assign) node).rhs.getText();
+
+			// 정수인지 정수가 아닌 실수인지 판별
+			boolean intFlag = false;
+			Float floatNum = Float.parseFloat(literal);
+			int intNum = 0;
+			if (floatNum - Math.ceil(floatNum) == 0) {
+				intNum = Integer.parseInt(((Variable_Declaration_Assign) node).rhs.getText());
+				intFlag = true;
+			}
+
 			int Variable[] = GlobalVariableMap.get(FieldName);
-			UCode += ELEVEN_SPACE + "ldc " + num + "\n";
+			UCode += ELEVEN_SPACE + "ldc " + (intFlag ? intNum : floatNum) + "\n";
 			UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
 	}
@@ -134,7 +157,11 @@ public class UcodeGenVisitor implements ASTVisitor {
 		for (Local_Declaration decl : decls) {
 			if (decl instanceof Local_Variable_Declaration_Array) { // 배열의 경우
 				String arraySize = ((Local_Variable_Declaration_Array) decl).rhs.getText();
-				fieldSize += Integer.parseInt(arraySize);
+				try {
+					fieldSize += Integer.parseInt(arraySize);
+				} catch (Exception e) {
+					throwsError(((Local_Variable_Declaration_Array) decl).toString(), "배열의 크기는 정수이어야 합니다.");
+				}
 			} else { // 배열이 아닌 int형인 경우
 				fieldSize++;
 			}
@@ -223,9 +250,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 		UCode += getNewBasicBlock() + ":\n"; // BBLeader: While_start
 		int BBStartNumber = BasicBlockCount;
 		UCode += startLabel + getSpace(startLabel.length()) + "nop\n";
-		
+
 		visitExpr(expr);
-		
+
 		UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
 		UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 		int BBEndNumber = BasicBlockCount;
@@ -237,7 +264,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 		UCode += getThisBasicBlock(BBEndNumber) + ":\n"; // <BB End>: target
 		UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
 	}
-	
+
 	@Override
 	public void visitFor_stmt(For_Statement node) {
 		Statement Lexpr = node.Lexpr;
@@ -246,20 +273,20 @@ public class UcodeGenVisitor implements ASTVisitor {
 		Statement stmt = node.stmt;
 		String startLabel = getNewLabel();
 		String endLabel = getNewLabel();
-		
+
 		visitStmt(Lexpr);
-		
+
 		UCode += getNewBasicBlock() + ":\n"; // BBLeader: For_start
 		int BBStartNumber = BasicBlockCount;
 		UCode += startLabel + getSpace(startLabel.length()) + "nop\n";
-		
+
 		visitStmt(Mexpr);
-		
+
 		UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
 		UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 		int BBEndNumber = BasicBlockCount;
 		UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
-		
+
 		visitStmt(stmt);
 		visitExpr(Rexpr);
 		UCode += ELEVEN_SPACE + "ujp " + startLabel + "\n";
@@ -297,8 +324,12 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 		// 배열변수 선언의 경우
 		if (node instanceof Local_Variable_Declaration_Array) {
-			String arraySize = ((Local_Variable_Declaration_Array) node).rhs.getText();
-			fieldSize = Integer.parseInt(arraySize);
+			// 배열의 크기가 정수형인지 확인
+			try {
+				fieldSize = Integer.parseInt(((Local_Variable_Declaration_Array) node).rhs.getText());
+			} catch (Exception e) {
+				throwsError(((Local_Variable_Declaration_Array) node).toString(), "배열의 크기는 정수이어야 합니다.");
+			}
 			isArray = ISARRAY;
 		}
 
@@ -309,9 +340,17 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 		// 할당선언의 경우 할당문 필요
 		if (node instanceof Local_Variable_Declaration_Assign) {
-			int num = Integer.parseInt(((Local_Variable_Declaration_Assign) node).rhs.getText());
+			String literal = ((Local_Variable_Declaration_Assign) node).rhs.getText();
+			Float floatNum = Float.parseFloat(literal);
+			int intNum = 0;
+			boolean intFlag = false;
+			if (floatNum - Math.ceil(floatNum) == 0) {
+				intNum = Integer.parseInt(((Local_Variable_Declaration_Assign) node).rhs.getText());
+				intFlag = true;
+			}
+
 			int Variable[] = LocalVariableMap.get(FieldName);
-			UCode += ELEVEN_SPACE + "ldc " + num + "\n";
+			UCode += ELEVEN_SPACE + "ldc " + (intFlag ? intNum : floatNum) + "\n";
 			UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
 	}
@@ -417,7 +456,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			BinaryOpNode n = (BinaryOpNode) node;
 			Expression lhs = n.lhs, rhs = n.rhs;
 			String op = n.op;
-			
+
 			visitExpr(lhs);
 			visitExpr(rhs);
 
@@ -517,7 +556,5 @@ public class UcodeGenVisitor implements ASTVisitor {
 			visitExpr(expr);
 		}
 	}
-
-	
 
 }
