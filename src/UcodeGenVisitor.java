@@ -663,8 +663,11 @@ public class UcodeGenVisitor implements ASTVisitor {
 			String terminal = terminalExpr.t_node.getText();
 			int Variable[] = getVariableWithShortestScope(terminal);
 
+			if (Variable == null && (op.equals("--") || op.equals("++"))){
+				throwsError(node.toString(), "해당하는 이름의 변수가 선언되어 있어야 합니다.");
+			}
 			// Variable == null으로 -1 또는 +1과 같은 경우(op="+" or "-")는 배제
-			if (Variable != null)
+			else if(Variable != null)
 				UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
 	}
