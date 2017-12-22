@@ -129,10 +129,8 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 
 		if (ctx.getText().equals("int"))
 			typeSpecification = new TypeSpecification(TypeSpecification.Type.INT);
-		else if(ctx.getText().equals("void"))
-			typeSpecification = new TypeSpecification(TypeSpecification.Type.VOID);
 		else
-			typeSpecification = new TypeSpecification(TypeSpecification.Type.BOOLEAN);
+			typeSpecification = new TypeSpecification(TypeSpecification.Type.VOID);
 
 		return typeSpecification;
 	}
