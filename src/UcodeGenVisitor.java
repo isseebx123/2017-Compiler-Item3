@@ -571,7 +571,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public void visitDefault_stmt(Case_Statement node) {
-		// TODO Auto-generated method stub
+		
 		
 	}
 
