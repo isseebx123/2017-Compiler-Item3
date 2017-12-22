@@ -49,6 +49,23 @@ public class UcodeGenVisitor implements ASTVisitor {
 		return "$$" + (LabelNumber++);
 	}
 
+	// decl_assign에서 할당하는 값과 변수의 타입을 전달받아, 적절한 할당문인지 타입을 체크하는 메소드
+	private int doAssignTypeCheck(String literal, int Type) {
+		// rhs 정수인지 정수가 아닌 실수인지 판별
+		boolean isIntNumber = false;
+		Float floatNum = Float.parseFloat(literal);
+		if (floatNum - Math.ceil(floatNum) == 0) {
+			isIntNumber = true;
+		}
+
+		if (isIntNumber && Type == IS_INT_SCALAR) {
+			return IS_INT_SCALAR;
+		} else if (!isIntNumber && Type == IS_FLOAT_OR_DOUBLE_SCALAR) {
+			return IS_FLOAT_OR_DOUBLE_SCALAR;
+		}
+		return -1;
+	}
+
 	// 타입 번호를 가져오는 메소드
 	private int getTypeNumber(TypeSpecification.Type type, boolean isArray) {
 		int Type;
@@ -150,18 +167,25 @@ public class UcodeGenVisitor implements ASTVisitor {
 		// 할당선언의 경우 assign문 삽입
 		if (node instanceof Variable_Declaration_Assign) {
 			String literal = ((Variable_Declaration_Assign) node).rhs.getText();
-
-			// 정수인지 정수가 아닌 실수인지 판별
-			boolean intFlag = false;
-			Float floatNum = Float.parseFloat(literal);
+			// rhs 정수인지 정수가 아닌 실수인지 판별
+			Double floatNum = 0.0;
 			int intNum = 0;
-			if (floatNum - Math.ceil(floatNum) == 0) {
-				intNum = Integer.parseInt(((Variable_Declaration_Assign) node).rhs.getText());
-				intFlag = true;
+
+			// Type checking
+			int typeCheckResult = doAssignTypeCheck(literal, Type);
+			if (typeCheckResult == -1) {
+				throwsError(node.toString(), "변수의 타입과 할당하는 값의 타입이 서로 다릅니다.");
+				System.exit(1);
+			}
+			else if(typeCheckResult == IS_INT_SCALAR) {
+				intNum = Integer.parseInt(literal);
+			}
+			else {
+				floatNum = Double.parseDouble(literal);
 			}
 
 			int Variable[] = GlobalVariableMap.get(FieldName);
-			UCode += ELEVEN_SPACE + "ldc " + (intFlag ? intNum : floatNum) + "\n";
+			UCode += ELEVEN_SPACE + "ldc " + (typeCheckResult == IS_INT_SCALAR ? intNum : floatNum) + "\n";
 			UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
 	}
@@ -349,7 +373,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 	@Override
 	public void visitLocal_decl(Local_Declaration node) {
 		final String FieldName = node.lhs.getText();
-		int fieldSize = 1, isArray;
+		int fieldSize = 1, Type;
 
 		// 배열변수 선언의 경우
 		if (node instanceof Local_Variable_Declaration_Array) {
@@ -360,31 +384,39 @@ public class UcodeGenVisitor implements ASTVisitor {
 				throwsError(((Local_Variable_Declaration_Array) node).toString(), "배열의 크기는 정수이어야 합니다.");
 			}
 			// 타입 결정 (배열)
-			isArray = getTypeNumber(node.type.type, ItsArray);
-		}
-		else {
+			Type = getTypeNumber(node.type.type, ItsArray);
+		} else {
 			// 타입 결정 (스칼라)
-			isArray = getTypeNumber(node.type.type, ItsNotArray);
+			Type = getTypeNumber(node.type.type, ItsNotArray);
 		}
-		
+
 		UCode += ELEVEN_SPACE + "sym " + LOCAL_VARIABLE_BASE + " " + LocalVariableOffset + " " + fieldSize + "\n";
 		// 맵에 변수 추가, Offset 조정
-		LocalVariableMap.put(FieldName, new int[] { LOCAL_VARIABLE_BASE, LocalVariableOffset, isArray });
+		LocalVariableMap.put(FieldName, new int[] { LOCAL_VARIABLE_BASE, LocalVariableOffset, Type });
 		LocalVariableOffset += fieldSize;
 
 		// 할당선언의 경우 할당문 필요
 		if (node instanceof Local_Variable_Declaration_Assign) {
 			String literal = ((Local_Variable_Declaration_Assign) node).rhs.getText();
-			Float floatNum = Float.parseFloat(literal);
+			// rhs 정수인지 정수가 아닌 실수인지 판별
+			Double floatNum = 0.0;
 			int intNum = 0;
-			boolean intFlag = false;
-			if (floatNum - Math.ceil(floatNum) == 0) {
-				intNum = Integer.parseInt(((Local_Variable_Declaration_Assign) node).rhs.getText());
-				intFlag = true;
+
+			// Type checking
+			int typeCheckResult = doAssignTypeCheck(literal, Type);
+			if (typeCheckResult == -1) {
+				throwsError(node.toString(), "변수의 타입과 할당하는 값의 타입이 서로 다릅니다.");
+				System.exit(1);
+			}
+			else if(typeCheckResult == IS_INT_SCALAR) {
+				intNum = Integer.parseInt(literal);
+			}
+			else {
+				floatNum = Double.parseDouble(literal);
 			}
 
 			int Variable[] = LocalVariableMap.get(FieldName);
-			UCode += ELEVEN_SPACE + "ldc " + (intFlag ? intNum : floatNum) + "\n";
+			UCode += ELEVEN_SPACE + "ldc " + (typeCheckResult == IS_INT_SCALAR ? intNum : floatNum) + "\n";
 			UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
 	}
