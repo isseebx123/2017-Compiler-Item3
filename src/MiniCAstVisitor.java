@@ -129,8 +129,10 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 
 		if (ctx.getText().equals("int"))
 			typeSpecification = new TypeSpecification(TypeSpecification.Type.INT);
-		else
+		else if(ctx.getText().equals("void"))
 			typeSpecification = new TypeSpecification(TypeSpecification.Type.VOID);
+		else
+			typeSpecification = new TypeSpecification(TypeSpecification.Type.BOOLEAN);
 
 		return typeSpecification;
 	}
@@ -326,6 +328,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 		else if (CHILDCOUNT == 4) {
 			TerminalNode t_node = (TerminalNode) ctx.getChild(0);
 			if (ctx.getChild(1).getText().equals("[")) {
+				
 				Expression _expr = visitExpr((MiniCParser.ExprContext) ctx.getChild(2));
 				expr = new ArefNode(t_node, _expr);
 			} else if (ctx.getChild(1).getText().equals("(")) {
