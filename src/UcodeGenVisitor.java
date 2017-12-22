@@ -639,7 +639,13 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 			visitExpr(expr);
 			// node.type = expr.type
-			LhsRhsExprType.put(node, LhsRhsExprType.remove(expr));
+			int exprType = LhsRhsExprType.remove(expr);
+			LhsRhsExprType.put(node, exprType);
+
+			if ((op.equals("++") || op.equals("--"))
+					&& (exprType == IS_FLOAT_OR_DOUBLE_SCALAR || exprType == IS_FLOAT_OR_DOUBLE_ARRAY)) {
+				throwsError(node.toString(), "해당 연산은 정수형 변수에서 가능합니다.");
+			}
 
 			if (op.equals("-")) {
 				UCode += ELEVEN_SPACE + "neg\n";
