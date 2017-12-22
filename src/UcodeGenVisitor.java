@@ -14,7 +14,7 @@ import Domain.Stmt.*;
 import Domain.Type_spec.*;
 
 public class UcodeGenVisitor implements ASTVisitor {
-	/* Value */
+	/* Final Variable */
 	private final int GLOBAL_VARIABLE_BASE = 1; // 글로벌변수의 베이스
 	private final int LOCAL_VARIABLE_BASE = 2; // 로컬변수의 베이스
 
@@ -36,15 +36,12 @@ public class UcodeGenVisitor implements ASTVisitor {
 	/* Label */
 	private int LabelNumber = 0;
 
-	/* UCode */
+	/* UCode & 11개 공백문자 */
 	public String UCode = "";
 	private final String ELEVEN_SPACE = "           ";
 
 	/* Control Flow Graph(CFG) */
 	private int BasicBlockCount = 0;
-
-	/* Expr Type for Checking binary op calculation type */
-	private HashMap<Expression, Integer> LhsRhsExprType = new HashMap<>();
 
 	/* private defined Methods */
 	// 새로운 라벨 문자열을 받아오는 메소드
@@ -478,6 +475,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 		UCode += ELEVEN_SPACE + "end\n";
 	}
 
+	/* Expr Type for Checking binary op calculation type */
+	private HashMap<Expression, Integer> LhsRhsExprType = new HashMap<>();
+
 	@Override
 	public void visitExpr(Expression node) {
 		if (node instanceof ArefAssignNode) {
@@ -534,16 +534,16 @@ public class UcodeGenVisitor implements ASTVisitor {
 			TerminalNode t_node = n.t_node;
 			Expression expr = n.expr;
 			int arrayVariable[] = getVariableWithShortestScope(t_node.getText());
-			
+
 			visitExpr(expr);
-			
+
 			// Type Check
 			int variableType = getVariableWithShortestScope(t_node.getText())[2];
 			int exprType = LhsRhsExprType.get(expr);
 			if (ExprTypeCheck(variableType, exprType) == -1) {
 				throwsError(node.toString(), "연산하는 Expr간의 타입이 서로 다릅니다.");
 			}
-			
+
 			UCode += ELEVEN_SPACE + "str " + arrayVariable[0] + " " + arrayVariable[1] + "\n";
 		} else if (node instanceof BinaryOpNode) {
 			// lhs op rhs
