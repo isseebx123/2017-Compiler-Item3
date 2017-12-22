@@ -43,6 +43,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 	/* Control Flow Graph(CFG) */
 	private int BasicBlockCount = 0;
 
+	/* Expr Type for Checking binary op calculation type */
+	private HashMap<Expression, Integer> LhsRhsExprType = new HashMap<>();
+
 	/* private defined Methods */
 	// 새로운 라벨 문자열을 받아오는 메소드
 	private String getNewLabel() {
@@ -176,11 +179,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 			if (typeCheckResult == -1) {
 				throwsError(node.toString(), "변수의 타입과 할당하는 값의 타입이 서로 다릅니다.");
 				System.exit(1);
-			}
-			else if(typeCheckResult == IS_INT_SCALAR) {
+			} else if (typeCheckResult == IS_INT_SCALAR) {
 				intNum = Integer.parseInt(literal);
-			}
-			else {
+			} else {
 				floatNum = Double.parseDouble(literal);
 			}
 
@@ -291,6 +292,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 	@Override
 	public void visitExpr_stmt(Expression_Statement node) {
 		visitExpr(node.expr);
+		LhsRhsExprType.clear(); // expr에서 사용된 해쉬맵을 초기화
 	}
 
 	@Override
@@ -407,11 +409,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 			if (typeCheckResult == -1) {
 				throwsError(node.toString(), "변수의 타입과 할당하는 값의 타입이 서로 다릅니다.");
 				System.exit(1);
-			}
-			else if(typeCheckResult == IS_INT_SCALAR) {
+			} else if (typeCheckResult == IS_INT_SCALAR) {
 				intNum = Integer.parseInt(literal);
-			}
-			else {
+			} else {
 				floatNum = Double.parseDouble(literal);
 			}
 
@@ -491,7 +491,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			Expression lhs = n.lhs;
 			Expression rhs = n.rhs;
 			int arrayVariable[] = getVariableWithShortestScope(t_node.getText());
-			
+
 			// 결과가 스택에 들어있다고 생각. LITERAL|IDENT에서 처리.
 			visitExpr(lhs);
 			UCode += ELEVEN_SPACE + "lda " + arrayVariable[0] + " " + arrayVariable[1] + "\n";
@@ -574,16 +574,19 @@ public class UcodeGenVisitor implements ASTVisitor {
 			String terminal = n.t_node.getText();
 
 			int Variable[] = getVariableWithShortestScope(terminal);
+			// Input this node's type For Type Checking
+			LhsRhsExprType.put(node, Variable[2]);
+
 			if (Variable != null) {
 				// IDENT
 				if (Variable[2] == IS_INT_SCALAR)
 					UCode += ELEVEN_SPACE + "lod " + Variable[0] + " " + Variable[1] + "\n";
 				else if (Variable[2] == IS_INT_ARRAY)
 					UCode += ELEVEN_SPACE + "lda " + Variable[0] + " " + Variable[1] + "\n";
-			} else {
-				// LITERAL
-				UCode += ELEVEN_SPACE + "ldc " + terminal + "\n";
 			}
+			
+			// LITERAL
+			UCode += ELEVEN_SPACE + "ldc " + terminal + "\n";
 		} else if (node instanceof UnaryOpNode) {
 			// op expr
 			UnaryOpNode n = (UnaryOpNode) node;
@@ -625,20 +628,18 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public void visitSwitch_stmt(Switch_Statement node) {
-		
-		
+
 	}
 
 	@Override
 	public void visitCase_stmt(Case_Statement node) {
-		
-		
+
 	}
 
 	@Override
 	public void visitDefault_stmt(Case_Statement node) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }
