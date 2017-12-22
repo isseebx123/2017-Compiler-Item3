@@ -31,15 +31,22 @@ stmt		: expr_stmt
 		| if_stmt			
 		| while_stmt	
 		| for_stmt		
+		| switch_stmt
 		| return_stmt			;
 		
 expr_stmt	: expr ';'			;
 
 while_stmt	: WHILE '(' expr ')' stmt	;
 
+switch_stmt	: SWITCH '(' IDENT ')' '{' case_stmt* (default_stmt | )'}'; 
+
 for_stmt	: FOR '(' expr_stmt expr_stmt expr ')' stmt	;
 
-compound_stmt: '{' local_decl* stmt* '}'	;
+case_stmt: (CASE (IDENT|LITERAL)':' stmt* (BREAK';'|)) ;
+
+default_stmt: (DEFAULT ':' stmt* ) ;
+
+compound_stmt: '{' local_decl* stmt*  '}'	;
 
 local_decl	: type_spec IDENT ';'
 		| type_spec IDENT '='  LITERAL';'	
@@ -72,11 +79,14 @@ INT: 'int';
 FLOAT: 'float';
 DOUBLE: 'double';
 
-
+SWITCH: 'switch';
 WHILE: 'while';
 IF: 'if';
 FOR: 'for';
 ELSE: 'else';
+CASE: 'case' ;
+BREAK: 'break' ;
+DEFAULT: 'default' ;
 RETURN: 'return';
 OR: 'or';
 AND: 'and';

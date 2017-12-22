@@ -557,4 +557,22 @@ public class UcodeGenVisitor implements ASTVisitor {
 		}
 	}
 
+	@Override
+	public void visitSwitch_stmt(Switch_Statement node) {
+		
+		
+	}
+
+	@Override
+	public void visitCase_stmt(Case_Statement node) {
+		
+		
+	}
+
+	@Override
+	public void visitDefault_stmt(Case_Statement node) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
