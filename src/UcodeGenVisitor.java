@@ -299,6 +299,8 @@ public class UcodeGenVisitor implements ASTVisitor {
 			visitWhile_stmt((While_Statement) node);
 		} else if (node instanceof For_Statement) {
 			visitFor_stmt((For_Statement) node);
+		} else if (node instanceof Switch_Statement) {
+			visitSwitch_stmt((Switch_Statement) node);
 		}
 	}
 
