@@ -47,5 +47,5 @@ public interface ASTVisitor {
 	
 	public void visitCase_stmt(Case_Statement node);
 	
-	public void visitDefault_stmt(Case_Statement node);
+	public void visitDefault_stmt(Default_Statement node);
 }

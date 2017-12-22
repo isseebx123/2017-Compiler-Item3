@@ -1,3 +1,4 @@
+
 int t[1];
 double aa[1];
 float bb[2];
@@ -23,3 +24,4 @@ void main ()
 { 
    x = 1;
 }
+
