@@ -2,8 +2,11 @@ double t[1];
 double aa[1];
 float bb[2];
 int x;
+<<<<<<< HEAD
 double cc = 1.1;
 int bb = 5;
+=======
+>>>>>>> master
 void main () 
 { 
 

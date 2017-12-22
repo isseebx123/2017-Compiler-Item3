@@ -670,12 +670,12 @@ public class UcodeGenVisitor implements ASTVisitor {
 		}
 	}
 
-	static String switchEndLabel; // 스위치문 나가는 곳
-	static String nextCase; // 스위치문에서 다음 Case문 위치
-	static boolean lastCase; // 현재보고있는위치가 마지막 Case인지
-	static boolean defaultCase; // default Case가 있는지
-	static int BBnextCaseNumber; // 스위치문에서 다음 Case문 BB번호
-	static int BBSwitch; // 스위치문 나가는곳 BB번호
+	private String switchEndLabel; // 스위치문 나가는 곳
+	private String nextCase; // 스위치문에서 다음 Case문 위치
+	private boolean lastCase; // 현재보고있는위치가 마지막 Case인지
+	private boolean defaultCase; // default Case가 있는지
+	private int BBnextCaseNumber; // 스위치문에서 다음 Case문 BB번호
+	private int BBSwitch; // 스위치문 나가는곳 BB번호
 
 	@Override
 	public void visitSwitch_stmt(Switch_Statement node) {
@@ -705,9 +705,8 @@ public class UcodeGenVisitor implements ASTVisitor {
 			if (i != stmts.size() - 1) { // 마지막 case가 아니라면
 				UCode += "<bb " + BBnextCaseNumber + ">:\n"; // BBLeader: 브랜치 직후
 				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";
-			} else if (i == stmts.size() - 1 && defaultCase == true) { // 마지막인데
-																		// default가
-																		// 있는 경우
+			} else if (i == stmts.size() - 1 && defaultCase == true) {
+				// 마지막인데 default가 있는 경우
 				UCode += "<bb " + BBnextCaseNumber + ">:\n"; // BBLeader: 브랜치 직후
 				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";
 			}
@@ -735,9 +734,8 @@ public class UcodeGenVisitor implements ASTVisitor {
 			UCode += ELEVEN_SPACE + "ldc " + caseVal.getText() + "\n";
 		}
 		UCode += ELEVEN_SPACE + "eq\n";
-		if (lastCase == false || defaultCase == true) { // 마지막 Case아니거나 마지막인데
-														// default있는경우 다음위치를
-														// 정해줘야함
+		if (lastCase == false || defaultCase == true) {
+			// 마지막 Case아니거나 마지막인데 default있는경우 다음위치를 정해줘야함
 			nextCase = getNewLabel();
 			UCode += ELEVEN_SPACE + "fjp " + nextCase + "\n";
 			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
