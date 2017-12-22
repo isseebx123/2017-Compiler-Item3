@@ -14,6 +14,7 @@ public class TestMiniC {
 
 		// building AST + translate miniC2Ucode
 		MiniCAstVisitor visitor = new MiniCAstVisitor();
+		//visitor.visit(tree);
 		UcodeGenVisitor uvisitor = new UcodeGenVisitor();
 		visitor.visit(tree).accept(uvisitor);
 		System.out.println(uvisitor.UCode);
