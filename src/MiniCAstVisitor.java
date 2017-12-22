@@ -17,7 +17,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 
 	public MiniCNode visit(ParseTree tree) {
 		Program program = visitProgram((MiniCParser.ProgramContext) tree);
-		//System.out.println(program.toString());
+		// System.out.println(program.toString());
 		return program;
 	}
 
@@ -125,13 +125,17 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 
 	@Override
 	public TypeSpecification visitType_spec(MiniCParser.Type_specContext ctx) {
-		TypeSpecification typeSpecification;
+		TypeSpecification typeSpecification = null;
 
 		if (ctx.getText().equals("int"))
 			typeSpecification = new TypeSpecification(TypeSpecification.Type.INT);
-		else
+		else if (ctx.getText().equals("void"))
 			typeSpecification = new TypeSpecification(TypeSpecification.Type.VOID);
-
+		else if (ctx.getText().equals("double"))
+			typeSpecification = new TypeSpecification(TypeSpecification.Type.DOUBLE);
+		else if (ctx.getText().equals("float"))
+			typeSpecification = new TypeSpecification(TypeSpecification.Type.FLOAT);
+		
 		return typeSpecification;
 	}
 
@@ -215,7 +219,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 		final int CHILDCOUNT = ctx.getChildCount();
 		for (int i = 0; i < CHILDCOUNT; i++) {
 			ParseTree child = ctx.getChild(i);
-			
+
 			if (child instanceof MiniCParser.Local_declContext) {
 				Local_Declaration lDecl = visitLocal_decl((MiniCParser.Local_declContext) child);
 				local_decls.add(lDecl);
@@ -289,7 +293,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 
 		return (Statement) stmt;
 	}
-	
+
 	@Override
 	public Statement visitFor_stmt(MiniCParser.For_stmtContext ctx) {
 		For_Statement stmt = null;
@@ -303,8 +307,6 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 
 		return (Statement) stmt;
 	}
-	
-	
 
 	@Override
 	public Expression visitExpr(MiniCParser.ExprContext ctx) {
@@ -326,7 +328,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 		else if (CHILDCOUNT == 4) {
 			TerminalNode t_node = (TerminalNode) ctx.getChild(0);
 			if (ctx.getChild(1).getText().equals("[")) {
-				
+
 				Expression _expr = visitExpr((MiniCParser.ExprContext) ctx.getChild(2));
 				expr = new ArefNode(t_node, _expr);
 			} else if (ctx.getChild(1).getText().equals("(")) {

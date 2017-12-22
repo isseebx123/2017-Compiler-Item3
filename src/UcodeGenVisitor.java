@@ -17,8 +17,10 @@ public class UcodeGenVisitor implements ASTVisitor {
 	/* Value */
 	private final int GLOBAL_VARIABLE_BASE = 1; // 글로벌변수의 베이스
 	private final int LOCAL_VARIABLE_BASE = 2; // 로컬변수의 베이스
-	private final int ISARRAY = 1; // 변수가 배열이면 1
-	private final int ISNOTARRAY = 0; // 변수가 배열이 아니면 0
+	private final int IS_INT_ARRAY = 1; // 변수가 배열이면 1
+	private final int IS_INT_SCALAR = 0; // 변수가 배열이 아니면 0
+	private final int IS_FLOAT_OR_DOUBLE_ARRAY = 2; // 변수가 배열이면 1
+	private final int IS_FLOAT_OR_DOUBLE_SCALAR = 3; // 변수가 배열이면 1
 
 	/* Variable */
 	private HashMap<String, int[]> LocalVariableMap = new HashMap<>();
@@ -103,7 +105,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 	@Override
 	public void visitVar_decl(Variable_Declaration node) {
 		final String FieldName = node.lhs.getText();
-		int fieldSize = 1, isArray = ISNOTARRAY;
+		int fieldSize = 1, isArray = IS_INT_SCALAR;
 
 		// 배열의 경우 Size 및 배열여부를 설정
 		if (node instanceof Variable_Declaration_Array) {
@@ -114,7 +116,8 @@ public class UcodeGenVisitor implements ASTVisitor {
 			catch(Exception e) {
 				throwsError(((Variable_Declaration_Array) node).toString(), "배열의 크기는 정수이어야 합니다.");
 			}
-			isArray = ISARRAY;
+			System.out.println("((Variable_Declaration_Array) node).type.toString(): "+ ((Variable_Declaration_Array) node).type.toString());
+			isArray = IS_INT_ARRAY;
 		}
 
 		UCode += ELEVEN_SPACE + "sym " + GLOBAL_VARIABLE_BASE + " " + GlobalVariableOffset + " " + fieldSize + "\n";
@@ -207,9 +210,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 	public void visitParam(Parameter node) {
 		TerminalNode t_node = node.t_node;
 
-		int fieldSize = 1, isArray = ISNOTARRAY;
+		int fieldSize = 1, isArray = IS_INT_SCALAR;
 		if (node instanceof ArrayParameter) {
-			isArray = ISARRAY;
+			isArray = IS_INT_ARRAY;
 		}
 
 		UCode += ELEVEN_SPACE + "sym " + LOCAL_VARIABLE_BASE + " " + LocalVariableOffset + " " + fieldSize + "\n";
@@ -321,7 +324,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 	@Override
 	public void visitLocal_decl(Local_Declaration node) {
 		final String FieldName = node.lhs.getText();
-		int fieldSize = 1, isArray = ISNOTARRAY;
+		int fieldSize = 1, isArray = IS_INT_SCALAR;
 		
 		// 배열변수 선언의 경우
 		if (node instanceof Local_Variable_Declaration_Array) {
@@ -332,7 +335,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			catch(Exception e) {
 				throwsError(((Local_Variable_Declaration_Array) node).toString(), "배열의 크기는 정수이어야 합니다.");
 			}
-			isArray = ISARRAY;
+			isArray = IS_INT_ARRAY;
 		}
 
 		UCode += ELEVEN_SPACE + "sym " + LOCAL_VARIABLE_BASE + " " + LocalVariableOffset + " " + fieldSize + "\n";
@@ -512,9 +515,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 			int Variable[] = getVariableWithShortestScope(terminal);
 			if (Variable != null) {
 				// IDENT
-				if (Variable[2] == ISNOTARRAY)
+				if (Variable[2] == IS_INT_SCALAR)
 					UCode += ELEVEN_SPACE + "lod " + Variable[0] + " " + Variable[1] + "\n";
-				else if (Variable[2] == ISARRAY)
+				else if (Variable[2] == IS_INT_ARRAY)
 					UCode += ELEVEN_SPACE + "lda " + Variable[0] + " " + Variable[1] + "\n";
 			} else {
 				// LITERAL
