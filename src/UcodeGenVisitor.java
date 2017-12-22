@@ -66,12 +66,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 	// decl_assign에서 할당하는 값과 변수의 타입을 전달받아, 적절한 할당문인지 타입을 체크하는 메소드
 	private int doAssignTypeCheck(String literal, int Type) {
-		// rhs 정수인지 정수가 아닌 실수인지 판별
-		boolean isIntNumber = false;
-		Float floatNum = Float.parseFloat(literal);
-		if (floatNum - Math.ceil(floatNum) == 0) {
-			isIntNumber = true;
-		}
+		boolean isIntNumber = !literal.contains(".");
 
 		if (isIntNumber && Type == IS_INT_SCALAR) {
 			return IS_INT_SCALAR;
@@ -198,7 +193,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			}
 
 			int Variable[] = GlobalVariableMap.get(FieldName);
-			UCode += ELEVEN_SPACE + "ldc " + (typeCheckResult == IS_INT_SCALAR ? intNum : floatNum) + "\n";
+			UCode += ELEVEN_SPACE + "ldc " + (typeCheckResult == IS_INT_SCALAR ? Integer.toString(intNum) : floatNum) + "\n";
 			UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
 	}
@@ -430,7 +425,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			}
 
 			int Variable[] = LocalVariableMap.get(FieldName);
-			UCode += ELEVEN_SPACE + "ldc " + (typeCheckResult == IS_INT_SCALAR ? intNum : floatNum) + "\n";
+			UCode += ELEVEN_SPACE + "ldc " + (typeCheckResult == IS_INT_SCALAR ? Integer.toString(intNum) : floatNum) + "\n";
 			UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
 	}
@@ -521,6 +516,14 @@ public class UcodeGenVisitor implements ASTVisitor {
 			int arrayVariable[] = getVariableWithShortestScope(t_node.getText());
 
 			visitExpr(expr);
+			
+			// �迭ũ�� expr�� ��������� Ȯ�� 
+			int exprType = LhsRhsExprType.remove(expr);
+			if (exprType == IS_FLOAT_OR_DOUBLE_SCALAR || exprType == IS_FLOAT_OR_DOUBLE_ARRAY) {
+				throwsError(node.toString(), "�迭�� ũ��� ���� �մϴ�.");
+				System.exit(1);
+			}
+			
 			UCode += ELEVEN_SPACE + "lda " + arrayVariable[0] + " " + arrayVariable[1] + "\n";
 			UCode += ELEVEN_SPACE + "add\n";
 		} else if (node instanceof AssignNode) {
@@ -539,13 +542,14 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 			visitExpr(lhs);
 			visitExpr(rhs);
-
+			
 			if ((op.equals("+") || op.equals("-") || op.equals("/") || op.equals("*") || op.equals("%"))
 					&& ExprTypeCheck(lhs, rhs) == false) {
 				// Type Check result == failed
 				throwsError(node.toString(), "연산하는 Expr간의 타입이 서로 다릅니다.");
 			}
-
+			// Ÿ���� ��� ���, ���� ��� Ÿ��� �ؽ��ʿ� ����, ������ MOD����� ����?
+			
 			if (op.equals("*")) {
 				UCode += ELEVEN_SPACE + "mul\n";
 			} else if (op.equals("/")) {
@@ -588,6 +592,10 @@ public class UcodeGenVisitor implements ASTVisitor {
 			Expression expr = n.expr;
 
 			visitExpr(expr);
+			// ���� ������� Ÿ��� ������־���� ������� �ڽ��� ���� �ٽ� ���
+			if (LhsRhsExprType.containsKey(expr)) {
+				LhsRhsExprType.put(node, LhsRhsExprType.remove(expr));
+			}
 		} else if (node instanceof TerminalExpression) {
 			// 1 또는 x
 			TerminalExpression n = (TerminalExpression) node;
@@ -607,14 +615,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 				// LITERAL
 				UCode += ELEVEN_SPACE + "ldc " + terminal + "\n";
 
-				// 타입체크를 위해, Expr의 타입을 삽입
-				int Type;
-				Float floatNum = Float.parseFloat(terminal);
-				if (floatNum - Math.ceil(floatNum) == 0) {
-					Type = IS_INT_SCALAR;
-				} else {
-					Type = IS_FLOAT_OR_DOUBLE_SCALAR;
-				}
+				int Type = terminal.contains(".") ? IS_FLOAT_OR_DOUBLE_SCALAR : IS_INT_SCALAR;
 				LhsRhsExprType.put(node, Type);
 			}
 		} else if (node instanceof UnaryOpNode) {
@@ -624,7 +625,11 @@ public class UcodeGenVisitor implements ASTVisitor {
 			Expression expr = n.expr;
 
 			visitExpr(expr);
-
+			// ���� ������� Ÿ��� ������־���� ������� �ڽ��� ���� �ٽ� ���
+			if (LhsRhsExprType.containsKey(expr)) {
+				LhsRhsExprType.put(node, LhsRhsExprType.remove(expr));
+			}
+			
 			if (op.equals("-")) {
 				UCode += ELEVEN_SPACE + "neg\n";
 			} else if (op.equals("+")) {
