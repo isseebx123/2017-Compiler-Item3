@@ -7,7 +7,7 @@ public class TypeSpecification extends MiniCNode {
 	public final Type type;
 
 	public enum Type {
-		VOID, INT, BOOLEAN
+		VOID, INT
 	}
 
 	public TypeSpecification(Type type) {
