@@ -7,7 +7,7 @@ decl		: var_decl
 		
 var_decl	:  type_spec IDENT ';' 
 		| type_spec IDENT '=' LITERAL';'	
-		| type_spec IDENT '[' ArrayDeclSizeConstant'] '';'	
+		| type_spec IDENT '[' LITERAL ']'';'	
 		;
 		
 type_spec	: VOID				
@@ -42,7 +42,7 @@ compound_stmt: '{' local_decl* stmt* '}'	;
 
 local_decl	: type_spec IDENT ';'
 		| type_spec IDENT '=' LITERAL';'	
-		| type_spec IDENT '[' ArrayAssignSizeConstant ']'';'	;
+		| type_spec IDENT '[' LITERAL ']'';'	;
 
 
 if_stmt		: IF '(' expr ')' stmt		
@@ -92,13 +92,6 @@ IDENT  : [a-zA-Z_]
 
 LITERAL:   FloatingPointConstant     |   DecimalConstant     |   OctalConstant     |   HexadecimalConstant     ;
 
-ArrayDeclSizeConstant
-	:	[1-9] [0-9]* 
-	;
-	
-ArrayAssignSizeConstant
-	:	[0-9]* 
-	;
 
 FloatingPointConstant
 	:	'0' '.' [0-9]*

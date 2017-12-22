@@ -52,14 +52,14 @@ public class UcodeGenVisitor implements ASTVisitor {
 		return "<bb " + BBNum + ">";
 	}
 
-	private void throwsError(String errMsg, String reason) {
+	private void throwsError(String errMsg, String reason){
 		System.out.println("컴파일에러: " + reason);
 		System.out.println("===============================");
 		System.out.println(errMsg);
 		System.out.println("===============================");
 		System.exit(1);
 	}
-
+	
 	// 남은 공백 문자열을 받아오는 메소드
 	private String getSpace(int curNum) {
 		return ELEVEN_SPACE.substring(0, 11 - curNum);
@@ -108,9 +108,10 @@ public class UcodeGenVisitor implements ASTVisitor {
 		// 배열의 경우 Size 및 배열여부를 설정
 		if (node instanceof Variable_Declaration_Array) {
 			// 배열의 크기가 정수형인지 확인
-			try {
+			try{
 				fieldSize = Integer.parseInt(((Variable_Declaration_Array) node).rhs.getText());
-			} catch (Exception e) {
+			}
+			catch(Exception e) {
 				throwsError(((Variable_Declaration_Array) node).toString(), "배열의 크기는 정수이어야 합니다.");
 			}
 			isArray = ISARRAY;
@@ -157,9 +158,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 		for (Local_Declaration decl : decls) {
 			if (decl instanceof Local_Variable_Declaration_Array) { // 배열의 경우
 				String arraySize = ((Local_Variable_Declaration_Array) decl).rhs.getText();
-				try {
-					fieldSize += Integer.parseInt(arraySize);
-				} catch (Exception e) {
+				try{
+				fieldSize += Integer.parseInt(arraySize);
+				} catch(Exception e) {
 					throwsError(((Local_Variable_Declaration_Array) decl).toString(), "배열의 크기는 정수이어야 합니다.");
 				}
 			} else { // 배열이 아닌 int형인 경우
@@ -321,13 +322,14 @@ public class UcodeGenVisitor implements ASTVisitor {
 	public void visitLocal_decl(Local_Declaration node) {
 		final String FieldName = node.lhs.getText();
 		int fieldSize = 1, isArray = ISNOTARRAY;
-
+		
 		// 배열변수 선언의 경우
 		if (node instanceof Local_Variable_Declaration_Array) {
 			// 배열의 크기가 정수형인지 확인
-			try {
+			try{
 				fieldSize = Integer.parseInt(((Local_Variable_Declaration_Array) node).rhs.getText());
-			} catch (Exception e) {
+			}
+			catch(Exception e) {
 				throwsError(((Local_Variable_Declaration_Array) node).toString(), "배열의 크기는 정수이어야 합니다.");
 			}
 			isArray = ISARRAY;
