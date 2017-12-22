@@ -110,9 +110,19 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 		// 할당선언의 경우 assign문 삽입
 		if (node instanceof Variable_Declaration_Assign) {
-			int num = Integer.parseInt(((Variable_Declaration_Assign) node).rhs.getText());
+			String literal = ((Variable_Declaration_Assign) node).rhs.getText();
+
+			// 정수인지 정수가 아닌 실수인지 판별
+			boolean intFlag = false;
+			Float floatNum = Float.parseFloat(literal);
+			int intNum = 0;
+			if (floatNum - Math.ceil(floatNum) == 0) {
+				intNum = Integer.parseInt(((Variable_Declaration_Assign) node).rhs.getText());
+				intFlag = true;
+			}
+
 			int Variable[] = GlobalVariableMap.get(FieldName);
-			UCode += ELEVEN_SPACE + "ldc " + num + "\n";
+			UCode += ELEVEN_SPACE + "ldc " + (intFlag ? intNum : floatNum) + "\n";
 			UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
 	}
@@ -223,9 +233,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 		UCode += getNewBasicBlock() + ":\n"; // BBLeader: While_start
 		int BBStartNumber = BasicBlockCount;
 		UCode += startLabel + getSpace(startLabel.length()) + "nop\n";
-		
+
 		visitExpr(expr);
-		
+
 		UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
 		UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 		int BBEndNumber = BasicBlockCount;
@@ -237,7 +247,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 		UCode += getThisBasicBlock(BBEndNumber) + ":\n"; // <BB End>: target
 		UCode += endLabel + getSpace(endLabel.length()) + "nop\n";
 	}
-	
+
 	@Override
 	public void visitFor_stmt(For_Statement node) {
 		Statement Lexpr = node.Lexpr;
@@ -246,20 +256,20 @@ public class UcodeGenVisitor implements ASTVisitor {
 		Statement stmt = node.stmt;
 		String startLabel = getNewLabel();
 		String endLabel = getNewLabel();
-		
+
 		visitStmt(Lexpr);
-		
+
 		UCode += getNewBasicBlock() + ":\n"; // BBLeader: For_start
 		int BBStartNumber = BasicBlockCount;
 		UCode += startLabel + getSpace(startLabel.length()) + "nop\n";
-		
+
 		visitStmt(Mexpr);
-		
+
 		UCode += ELEVEN_SPACE + "fjp " + endLabel + "\n";
 		UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 		int BBEndNumber = BasicBlockCount;
 		UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
-		
+
 		visitStmt(stmt);
 		visitExpr(Rexpr);
 		UCode += ELEVEN_SPACE + "ujp " + startLabel + "\n";
@@ -309,9 +319,17 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 		// 할당선언의 경우 할당문 필요
 		if (node instanceof Local_Variable_Declaration_Assign) {
-			int num = Integer.parseInt(((Local_Variable_Declaration_Assign) node).rhs.getText());
+			String literal = ((Local_Variable_Declaration_Assign) node).rhs.getText();
+			Float floatNum = Float.parseFloat(literal);
+			int intNum = 0;
+			boolean intFlag = false;
+			if (floatNum - Math.ceil(floatNum) == 0) {
+				intNum = Integer.parseInt(((Local_Variable_Declaration_Assign) node).rhs.getText());
+				intFlag = true;
+			}
+
 			int Variable[] = LocalVariableMap.get(FieldName);
-			UCode += ELEVEN_SPACE + "ldc " + num + "\n";
+			UCode += ELEVEN_SPACE + "ldc " + (intFlag ? intNum : floatNum) + "\n";
 			UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
 	}
@@ -417,7 +435,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			BinaryOpNode n = (BinaryOpNode) node;
 			Expression lhs = n.lhs, rhs = n.rhs;
 			String op = n.op;
-			
+
 			visitExpr(lhs);
 			visitExpr(rhs);
 
@@ -517,7 +535,5 @@ public class UcodeGenVisitor implements ASTVisitor {
 			visitExpr(expr);
 		}
 	}
-
-	
 
 }
