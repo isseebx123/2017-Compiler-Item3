@@ -1,4 +1,6 @@
 int t[1];
+double aa[1];
+float bb[2];
 int glo = 1;
 int x;
 void main () 
