@@ -676,12 +676,12 @@ public class UcodeGenVisitor implements ASTVisitor {
 		}
 	}
 
-	static String switchEndLabel;	//스위치문 나가는 곳  
-	static String nextCase;			//스위치문에서 다음 Case문 위치
-	static boolean lastCase;		//현재보고있는위치가 마지막 Case인지
-	static boolean defaultCase;		//default Case가 있는지
-	static int BBnextCaseNumber;	//스위치문에서 다음 Case문 BB번호
-	static int BBSwitch;			//스위치문 나가는곳 BB번호
+	private String switchEndLabel;	//스위치문 나가는 곳  
+	private String nextCase;			//스위치문에서 다음 Case문 위치
+	private boolean lastCase;		//현재보고있는위치가 마지막 Case인지
+	private boolean defaultCase;		//default Case가 있는지
+	private int BBnextCaseNumber;	//스위치문에서 다음 Case문 BB번호
+	private int BBSwitch;			//스위치문 나가는곳 BB번호
 	@Override
 	public void visitSwitch_stmt(Switch_Statement node) {
 
