@@ -43,10 +43,25 @@ public class UcodeGenVisitor implements ASTVisitor {
 	/* Control Flow Graph(CFG) */
 	private int BasicBlockCount = 0;
 
+	/* Expr Type for Checking binary op calculation type */
+	private HashMap<Expression, Integer> LhsRhsExprType = new HashMap<>();
+
 	/* private defined Methods */
 	// 새로운 라벨 문자열을 받아오는 메소드
 	private String getNewLabel() {
 		return "$$" + (LabelNumber++);
+	}
+
+	// Expr에서 lhs와 rhs의 타입을 비교하는 메소드
+	private boolean ExprTypeCheck(Expression lhs, Expression rhs) {
+		final int lhsType = LhsRhsExprType.remove(lhs);
+		final int rhsType = LhsRhsExprType.remove(rhs);
+
+		return ((lhsType == IS_INT_SCALAR || lhsType == IS_INT_ARRAY)
+				&& (rhsType == IS_INT_SCALAR || rhsType == IS_INT_ARRAY))
+				|| ((lhsType == IS_FLOAT_OR_DOUBLE_SCALAR || lhsType == IS_FLOAT_OR_DOUBLE_ARRAY)
+						&& (rhsType == IS_FLOAT_OR_DOUBLE_SCALAR || rhsType == IS_FLOAT_OR_DOUBLE_ARRAY)) ? true
+								: false;
 	}
 
 	// decl_assign에서 할당하는 값과 변수의 타입을 전달받아, 적절한 할당문인지 타입을 체크하는 메소드
@@ -176,11 +191,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 			if (typeCheckResult == -1) {
 				throwsError(node.toString(), "변수의 타입과 할당하는 값의 타입이 서로 다릅니다.");
 				System.exit(1);
-			}
-			else if(typeCheckResult == IS_INT_SCALAR) {
+			} else if (typeCheckResult == IS_INT_SCALAR) {
 				intNum = Integer.parseInt(literal);
-			}
-			else {
+			} else {
 				floatNum = Double.parseDouble(literal);
 			}
 
@@ -291,6 +304,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 	@Override
 	public void visitExpr_stmt(Expression_Statement node) {
 		visitExpr(node.expr);
+		LhsRhsExprType.clear(); // expr에서 사용된 해쉬맵을 초기화
 	}
 
 	@Override
@@ -407,11 +421,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 			if (typeCheckResult == -1) {
 				throwsError(node.toString(), "변수의 타입과 할당하는 값의 타입이 서로 다릅니다.");
 				System.exit(1);
-			}
-			else if(typeCheckResult == IS_INT_SCALAR) {
+			} else if (typeCheckResult == IS_INT_SCALAR) {
 				intNum = Integer.parseInt(literal);
-			}
-			else {
+			} else {
 				floatNum = Double.parseDouble(literal);
 			}
 
@@ -491,7 +503,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 			Expression lhs = n.lhs;
 			Expression rhs = n.rhs;
 			int arrayVariable[] = getVariableWithShortestScope(t_node.getText());
-			
+
 			// 결과가 스택에 들어있다고 생각. LITERAL|IDENT에서 처리.
 			visitExpr(lhs);
 			UCode += ELEVEN_SPACE + "lda " + arrayVariable[0] + " " + arrayVariable[1] + "\n";
@@ -525,6 +537,12 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 			visitExpr(lhs);
 			visitExpr(rhs);
+
+			if ((op.equals("+") || op.equals("-") || op.equals("/") || op.equals("*") || op.equals("%"))
+					&& ExprTypeCheck(lhs, rhs) == false) {
+				// Type Check result == failed
+				throwsError(node.toString(), "연산하는 Expr간의 타입이 서로 다릅니다.");
+			}
 
 			if (op.equals("*")) {
 				UCode += ELEVEN_SPACE + "mul\n";
@@ -574,8 +592,11 @@ public class UcodeGenVisitor implements ASTVisitor {
 			String terminal = n.t_node.getText();
 
 			int Variable[] = getVariableWithShortestScope(terminal);
+
 			if (Variable != null) {
 				// IDENT
+				LhsRhsExprType.put(node, Variable[2]); // 타입체크를 위해, Expr의 타입을 삽입
+
 				if (Variable[2] == IS_INT_SCALAR)
 					UCode += ELEVEN_SPACE + "lod " + Variable[0] + " " + Variable[1] + "\n";
 				else if (Variable[2] == IS_INT_ARRAY)
@@ -583,6 +604,16 @@ public class UcodeGenVisitor implements ASTVisitor {
 			} else {
 				// LITERAL
 				UCode += ELEVEN_SPACE + "ldc " + terminal + "\n";
+
+				// 타입체크를 위해, Expr의 타입을 삽입
+				int Type;
+				Float floatNum = Float.parseFloat(terminal);
+				if (floatNum - Math.ceil(floatNum) == 0) {
+					Type = IS_INT_SCALAR;
+				} else {
+					Type = IS_FLOAT_OR_DOUBLE_SCALAR;
+				}
+				LhsRhsExprType.put(node, Type);
 			}
 		} else if (node instanceof UnaryOpNode) {
 			// op expr
@@ -625,20 +656,18 @@ public class UcodeGenVisitor implements ASTVisitor {
 
 	@Override
 	public void visitSwitch_stmt(Switch_Statement node) {
-		
-		
+
 	}
 
 	@Override
 	public void visitCase_stmt(Case_Statement node) {
-		
-		
+
 	}
 
 	@Override
 	public void visitDefault_stmt(Case_Statement node) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }
