@@ -42,4 +42,10 @@ public interface ASTVisitor {
 	public void visitArgs(Arguments node);
 
 	public void visitFor_stmt(For_Statement node);
+	
+	public void visitSwitch_stmt(Switch_Statement node);
+	
+	public void visitCase_stmt(Case_Statement node);
+	
+	public void visitDefault_stmt(Case_Statement node);
 }
