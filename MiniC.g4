@@ -7,7 +7,7 @@ decl		: var_decl
 		
 var_decl	:  type_spec IDENT ';' 
 		| type_spec IDENT '=' (LITERAL|BOOL) ';'	
-		| type_spec IDENT '[' LITERAL ']' ';'	;
+		| type_spec IDENT '[' (DecimalConstant     |   OctalConstant     |   HexadecimalConstant) ']' ';'	;
 		
 type_spec	: VOID				
 		| INT				
@@ -42,7 +42,7 @@ compound_stmt: '{' local_decl* stmt* '}'	;
 
 local_decl	: type_spec IDENT ';'
 		| type_spec IDENT '=' (LITERAL | BOOL)';'	
-		| type_spec IDENT '[' LITERAL ']' ';'	;
+		| type_spec IDENT '[' (DecimalConstant     |   OctalConstant     |   HexadecimalConstant) ']' ';'	;
 
 if_stmt		: IF '(' expr ')' stmt		
 		| IF '(' expr ')' stmt ELSE stmt 		;

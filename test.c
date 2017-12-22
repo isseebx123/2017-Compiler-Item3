@@ -1,12 +1,13 @@
 int glo = 1.1;
-int x[0.2];
+int x;
 void main () 
 { 
-    double x;
+    double x[1];
     int y;
    
 	while(x>0){
 		y=0.2;
+		x[0.1] = 3;
 	}
 
     for( x=0; x<3; x = x+1 ){
@@ -18,6 +19,5 @@ void main ()
 
 void main () 
 { 
-   int x;
    x = 1;
 }
