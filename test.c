@@ -1,7 +1,7 @@
 int glo = 1.1;
 void main () 
 { 
-    int x;
+    double x;
     int y;
    
 	while(x>0){
