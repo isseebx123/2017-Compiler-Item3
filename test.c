@@ -1,26 +1,20 @@
-int t[1];
-double aa[1];
-float bb[2];
-int glo = 1;
-int x;
-void main () 
-{ 
-	int k[2];
-    int y;
-   	int j = 1;
-	while(x>0){
-		y=0.2;
-		t[9.2] = 1;
-	}
-
-    for( x=0; x<3; x = x+1 ){
-	int z = 1;
-	++y;
-    }
-    
-} 
 
 void main () 
 { 
-   x = 1;
+   int a = 1; int b = 3; 
+	
+   switch(a){
+     case 1:
+	b = 1;
+	break;
+     case 2:
+	b = 1;
+     case 3:
+	b = 2;
+        break;
+     case 4:
+        b= 3;
+   }
 }
+
+

@@ -9,9 +9,9 @@ import ASTVisitor.ASTVisitor;
 public class Case_Statement {
 
 	TerminalNode casenode;
-	TerminalNode caseVal;
-	List<Statement> stmts;
-	TerminalNode breaknode;
+	public TerminalNode caseVal;
+	public List<Statement> stmts;
+	public TerminalNode breaknode;
 
 	public Case_Statement(TerminalNode casenode, TerminalNode caseVal, List<Statement> stmts) {
 		this.casenode = casenode;

@@ -285,6 +285,8 @@ public class UcodeGenVisitor implements ASTVisitor {
 			visitWhile_stmt((While_Statement) node);
 		} else if (node instanceof For_Statement) {
 			visitFor_stmt((For_Statement) node);
+		} else if (node instanceof Switch_Statement) {
+			visitSwitch_stmt((Switch_Statement) node);
 		}
 	}
 
@@ -623,22 +625,74 @@ public class UcodeGenVisitor implements ASTVisitor {
 		}
 	}
 
+	static String switchEndLabel;
+	static String nextCase;
+	static boolean lastCase;
+	static boolean defaultCase;
 	@Override
 	public void visitSwitch_stmt(Switch_Statement node) {
+		TerminalNode ident = node.ident;
+		List<Case_Statement> stmts = node.stmts;
+		Default_Statement defaultnode = node.defaultnode;
 		
+		if (stmts.size() != 0)
+			switchEndLabel = getNewLabel();
 		
+		if(defaultnode != null)
+			defaultCase = true;
+		
+		for(int i=0; i<stmts.size(); i++){
+			int arrayVariable[] = getVariableWithShortestScope(ident.getText());
+			UCode += ELEVEN_SPACE + "lda " + arrayVariable[0] + " " + arrayVariable[1] + "\n";		
+			if(i == stmts.size()-1)
+				lastCase = true;
+			visitCase_stmt(stmts.get(i));
+			if(i != stmts.size()-1)
+				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";	
+			else if( i == stmts.size()-1 && defaultCase == true)
+				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";	
+		}
+		
+		if(defaultCase == true){
+			visitDefault_stmt(defaultnode);
+		}
+		UCode += switchEndLabel + getSpace(switchEndLabel.length()) + "nop\n";
 	}
 
 	@Override
 	public void visitCase_stmt(Case_Statement node) {
+		TerminalNode caseVal = node.caseVal;
+		List<Statement> stmts = node.stmts;
+		TerminalNode breaknode = node.breaknode;
 		
+		int Variable[] = getVariableWithShortestScope(caseVal.getText());
+		if (Variable != null) {
+			UCode += ELEVEN_SPACE + "lod " + Variable[0] + " " + Variable[1] + "\n";
+		} else{
+			UCode += ELEVEN_SPACE + "ldc " + caseVal.getText() + "\n";
+		}
+		UCode += ELEVEN_SPACE + "eq\n";
+		if(lastCase == false || defaultCase == true){
+			nextCase = getNewLabel();
+			UCode += ELEVEN_SPACE + "fjp " + nextCase + "\n";
+		} else{
+			UCode += ELEVEN_SPACE + "fjp " + switchEndLabel + "\n";
+		}
 		
-	}
+		for(int i=0; i<stmts.size(); i++){
+			visitStmt(stmts.get(i));
+		}
+		
+		if(breaknode != null){
+			UCode += ELEVEN_SPACE + "ujp " + switchEndLabel + "\n";
+		}
+	}	
 
 	@Override
-	public void visitDefault_stmt(Case_Statement node) {
-		
-		
+	public void visitDefault_stmt(Default_Statement node) {
+		List<Statement> stmts = node.stmts;
+		for(int i=0; i<stmts.size(); i++)
+			visitStmt(stmts.get(i));
 	}
 
 }
