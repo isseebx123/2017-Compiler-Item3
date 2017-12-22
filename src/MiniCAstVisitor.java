@@ -41,7 +41,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 		ParseTree childDecl = ctx.getChild(0);
 		Declaration decl = null;
 
-		/* Local_DeclarationÀº µé¾î¿ÀÁö ¾Ê´Â´Ù! */
+		/* Local_Declarationì€ ë“¤ì–´ì˜¤ì§€ ì•ŠëŠ”ë‹¤! */
 		if (childDecl instanceof MiniCParser.Fun_declContext) {
 			decl = visitFun_decl((MiniCParser.Fun_declContext) childDecl);
 		} else if (childDecl instanceof MiniCParser.Var_declContext) {
@@ -145,7 +145,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 		TypeSpecification typeSpecification;
 		final int CHILDCOUNT = ctx.getChildCount();
 
-		// °ø¹é
+		// ê³µë°±
 		if (CHILDCOUNT == 0) {
 			parameters = new Parameters();
 		}
@@ -441,7 +441,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 		List<Expression> exprs = new ArrayList();
 		final int CHILDCOUNT = ctx.getChildCount();
 
-		// °ø¹é
+		// ê³µë°±
 		if (CHILDCOUNT == 0) {
 			args = new Arguments();
 		}
