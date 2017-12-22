@@ -90,10 +90,6 @@ IDENT  : [a-zA-Z_]
         |  [0-9]
         )*;
 
-
-LITERAL:   DecimalConstant     |   OctalConstant     |   HexadecimalConstant     ;
-
-
 LITERAL:   FloatingPointConstant     |   DecimalConstant     |   OctalConstant     |   HexadecimalConstant     ;
 
 FloatingPointConstant
