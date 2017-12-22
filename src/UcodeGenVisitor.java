@@ -14,7 +14,7 @@ import Domain.Stmt.*;
 import Domain.Type_spec.*;
 
 public class UcodeGenVisitor implements ASTVisitor {
-	/* Value */
+	/* Final Variable */
 	private final int GLOBAL_VARIABLE_BASE = 1; // 글로벌변수의 베이스
 	private final int LOCAL_VARIABLE_BASE = 2; // 로컬변수의 베이스
 
@@ -36,15 +36,12 @@ public class UcodeGenVisitor implements ASTVisitor {
 	/* Label */
 	private int LabelNumber = 0;
 
-	/* UCode */
+	/* UCode & 11개 공백문자 */
 	public String UCode = "";
 	private final String ELEVEN_SPACE = "           ";
 
 	/* Control Flow Graph(CFG) */
 	private int BasicBlockCount = 0;
-
-	/* Expr Type for Checking binary op calculation type */
-	private HashMap<Expression, Integer> LhsRhsExprType = new HashMap<>();
 
 	/* private defined Methods */
 	// 새로운 라벨 문자열을 받아오는 메소드
@@ -53,9 +50,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 	}
 
 	// Expr에서 lhs와 rhs의 타입을 비교하는 메소드
-	private int ExprTypeCheck(Expression lhs, Expression rhs) {
-		final int lhsType = LhsRhsExprType.remove(lhs);
-		final int rhsType = LhsRhsExprType.remove(rhs);
+	private int ExprTypeCheck(int lhsType, int rhsType) {
 
 		if ((lhsType == IS_INT_SCALAR || lhsType == IS_INT_ARRAY)
 				&& (rhsType == IS_INT_SCALAR || rhsType == IS_INT_ARRAY))
@@ -69,16 +64,16 @@ public class UcodeGenVisitor implements ASTVisitor {
 	}
 
 	// decl_assign에서 할당하는 값과 변수의 타입을 전달받아, 적절한 할당문인지 타입을 체크하는 메소드
-	private int doAssignTypeCheck(String literal, int Type) {
+	private boolean doAssignTypeCheck(String literal, int Type) {
 		// rhs 정수인지 정수가 아닌 실수인지 판별
 		boolean isIntNumber = !literal.contains(".");
 
 		if (isIntNumber && Type == IS_INT_SCALAR) {
-			return IS_INT_SCALAR;
+			return true;
 		} else if (!isIntNumber && Type == IS_FLOAT_OR_DOUBLE_SCALAR) {
-			return IS_FLOAT_OR_DOUBLE_SCALAR;
+			return true;
 		}
-		return -1;
+		return false;
 	}
 
 	// 타입 번호를 가져오는 메소드
@@ -183,23 +178,15 @@ public class UcodeGenVisitor implements ASTVisitor {
 		if (node instanceof Variable_Declaration_Assign) {
 			String literal = ((Variable_Declaration_Assign) node).rhs.getText();
 			// rhs 정수인지 정수가 아닌 실수인지 판별
-			Double floatNum = 0.0;
-			int intNum = 0;
 
 			// Type checking
-			int typeCheckResult = doAssignTypeCheck(literal, Type);
-			if (typeCheckResult == -1) {
+			if (doAssignTypeCheck(literal, Type) == false) {
 				throwsError(node.toString(), "변수의 타입과 할당하는 값의 타입이 서로 다릅니다.");
 				System.exit(1);
-			} else if (typeCheckResult == IS_INT_SCALAR) {
-				intNum = Integer.parseInt(literal);
-			} else {
-				floatNum = Double.parseDouble(literal);
 			}
 
 			int Variable[] = GlobalVariableMap.get(FieldName);
-			UCode += ELEVEN_SPACE + "ldc " + (typeCheckResult == IS_INT_SCALAR ? Integer.toString(intNum) : floatNum)
-					+ "\n";
+			UCode += ELEVEN_SPACE + "ldc " + literal + "\n";
 			UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
 	}
@@ -416,23 +403,15 @@ public class UcodeGenVisitor implements ASTVisitor {
 		if (node instanceof Local_Variable_Declaration_Assign) {
 			String literal = ((Local_Variable_Declaration_Assign) node).rhs.getText();
 			// rhs 정수인지 정수가 아닌 실수인지 판별
-			Double floatNum = 0.0;
-			int intNum = 0;
 
 			// Type checking
-			int typeCheckResult = doAssignTypeCheck(literal, Type);
-			if (typeCheckResult == -1) {
+			if (doAssignTypeCheck(literal, Type) == false) {
 				throwsError(node.toString(), "변수의 타입과 할당하는 값의 타입이 서로 다릅니다.");
 				System.exit(1);
-			} else if (typeCheckResult == IS_INT_SCALAR) {
-				intNum = Integer.parseInt(literal);
-			} else {
-				floatNum = Double.parseDouble(literal);
 			}
 
 			int Variable[] = LocalVariableMap.get(FieldName);
-			UCode += ELEVEN_SPACE + "ldc " + (typeCheckResult == IS_INT_SCALAR ? Integer.toString(intNum) : floatNum)
-					+ "\n";
+			UCode += ELEVEN_SPACE + "ldc " + literal + "\n";
 			UCode += ELEVEN_SPACE + "str " + Variable[0] + " " + Variable[1] + "\n";
 		}
 	}
@@ -498,6 +477,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 		UCode += ELEVEN_SPACE + "end\n";
 	}
 
+	/* Expr Type for Checking binary op calculation type */
+	private HashMap<Expression, Integer> LhsRhsExprType = new HashMap<>();
+
 	@Override
 	public void visitExpr(Expression node) {
 		if (node instanceof ArefAssignNode) {
@@ -519,8 +501,16 @@ public class UcodeGenVisitor implements ASTVisitor {
 				throwsError(node.toString(), "배열의 크기는 정수여야 합니다.");
 				System.exit(1);
 			}
-			
+
 			visitExpr(rhs);
+
+			int variableType = getVariableWithShortestScope(t_node.getText())[2];
+			int rhsType = LhsRhsExprType.get(rhs);
+			if (ExprTypeCheck(variableType, rhsType) == -1) {
+				// 변수의 타입과 할당되는 값의 타입이 다른 경우
+				throwsError(node.toString(), "연산하는 Expr간의 타입이 서로 다릅니다.");
+			}
+
 			UCode += ELEVEN_SPACE + "sti\n";
 		} else if (node instanceof ArefNode) {
 			// t_node[expr];
@@ -546,7 +536,16 @@ public class UcodeGenVisitor implements ASTVisitor {
 			TerminalNode t_node = n.t_node;
 			Expression expr = n.expr;
 			int arrayVariable[] = getVariableWithShortestScope(t_node.getText());
+
 			visitExpr(expr);
+
+			// Type Check
+			int variableType = getVariableWithShortestScope(t_node.getText())[2];
+			int exprType = LhsRhsExprType.get(expr);
+			if (ExprTypeCheck(variableType, exprType) == -1) {
+				throwsError(node.toString(), "연산하는 Expr간의 타입이 서로 다릅니다.");
+			}
+
 			UCode += ELEVEN_SPACE + "str " + arrayVariable[0] + " " + arrayVariable[1] + "\n";
 		} else if (node instanceof BinaryOpNode) {
 			// lhs op rhs
@@ -557,10 +556,9 @@ public class UcodeGenVisitor implements ASTVisitor {
 			visitExpr(lhs);
 			visitExpr(rhs);
 
-			int Type = ExprTypeCheck(lhs, rhs);
-			if ((op.equals("+") || op.equals("-") || op.equals("/") || op.equals("*") || op.equals("%"))
-					&& Type == -1) {
-				// 숫자 이진연산에서 타입체크결과 lhs, rhs의 타입이 다른 경우 
+			// Type Check
+			int Type = ExprTypeCheck(LhsRhsExprType.get(lhs), LhsRhsExprType.get(rhs));
+			if (Type == -1) {
 				throwsError(node.toString(), "연산하는 Expr간의 타입이 서로 다릅니다.");
 			}
 			// lhs, rhs 타입이 같은 경우 연산의 결과 타입을 새로 저장
@@ -608,10 +606,8 @@ public class UcodeGenVisitor implements ASTVisitor {
 			Expression expr = n.expr;
 
 			visitExpr(expr);
-			// 만약 하위에서 타입을 설정해주었으면 상위에서 자신의 노드로 다시 설정
-			if (LhsRhsExprType.containsKey(expr)) {
-				LhsRhsExprType.put(node, LhsRhsExprType.remove(expr));
-			}
+			// node.type = expr.type
+			LhsRhsExprType.put(node, LhsRhsExprType.remove(expr));
 		} else if (node instanceof TerminalExpression) {
 			// 1 또는 x
 			TerminalExpression n = (TerminalExpression) node;
@@ -631,7 +627,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 				// LITERAL
 				UCode += ELEVEN_SPACE + "ldc " + terminal + "\n";
 
-				// 타입체크를 위해, Expr의 타입을 삽입
+				// 리프노드의 Type을 추가
 				int Type = terminal.contains(".") ? IS_FLOAT_OR_DOUBLE_SCALAR : IS_INT_SCALAR;
 				LhsRhsExprType.put(node, Type);
 			}
@@ -642,10 +638,8 @@ public class UcodeGenVisitor implements ASTVisitor {
 			Expression expr = n.expr;
 
 			visitExpr(expr);
-			// 만약 하위에서 타입을 설정해주었으면 상위에서 자신의 노드로 다시 설정
-			if (LhsRhsExprType.containsKey(expr)) {
-				LhsRhsExprType.put(node, LhsRhsExprType.remove(expr));
-			}
+			// node.type = expr.type
+			LhsRhsExprType.put(node, LhsRhsExprType.remove(expr));
 
 			if (op.equals("-")) {
 				UCode += ELEVEN_SPACE + "neg\n";
@@ -659,8 +653,8 @@ public class UcodeGenVisitor implements ASTVisitor {
 				UCode += ELEVEN_SPACE + "notop\n";
 			}
 
-			TerminalExpression nn = (TerminalExpression) expr;
-			String terminal = nn.t_node.getText();
+			TerminalExpression terminalExpr = (TerminalExpression) expr;
+			String terminal = terminalExpr.t_node.getText();
 			int Variable[] = getVariableWithShortestScope(terminal);
 
 			// Variable == null으로 -1 또는 +1과 같은 경우(op="+" or "-")는 배제
@@ -678,52 +672,54 @@ public class UcodeGenVisitor implements ASTVisitor {
 		}
 	}
 
-	private String switchEndLabel;	//스위치문 나가는 곳  
-	private String nextCase;			//스위치문에서 다음 Case문 위치
-	private boolean lastCase;		//현재보고있는위치가 마지막 Case인지
-	private boolean defaultCase;		//default Case가 있는지
-	private int BBnextCaseNumber;	//스위치문에서 다음 Case문 BB번호
-	private int BBSwitch;			//스위치문 나가는곳 BB번호
+	private String switchEndLabel; // 스위치문 나가는 곳
+	private String nextCase; // 스위치문에서 다음 Case문 위치
+	private boolean lastCase; // 현재보고있는위치가 마지막 Case인지
+	private boolean defaultCase; // default Case가 있는지
+	private int BBnextCaseNumber; // 스위치문에서 다음 Case문 BB번호
+	private int BBSwitch; // 스위치문 나가는곳 BB번호
+
 	@Override
 	public void visitSwitch_stmt(Switch_Statement node) {
 
 		TerminalNode ident = node.ident;
 		List<Case_Statement> stmts = node.stmts;
 		Default_Statement defaultnode = node.defaultnode;
-		
-		if (stmts.size() != 0)	//switch문안에 case가 있으면 나가는곳 설정
+
+		if (stmts.size() != 0) // switch문안에 case가 있으면 나가는곳 설정
 			switchEndLabel = getNewLabel();
-		
-		if(defaultnode != null)	//default Case가 있으면 true
+
+		if (defaultnode != null) // default Case가 있으면 true
 			defaultCase = true;
-		
-		getNewBasicBlock();	//switch나가는 블록
-		BBSwitch = BasicBlockCount;	//나가는 블록 저장
-		
-		for(int i=0; i<stmts.size(); i++){
+
+		getNewBasicBlock(); // switch나가는 블록
+		BBSwitch = BasicBlockCount; // 나가는 블록 저장
+
+		for (int i = 0; i < stmts.size(); i++) {
 			int arrayVariable[] = getVariableWithShortestScope(ident.getText());
-			UCode += ELEVEN_SPACE + "lod " + arrayVariable[0] + " " + arrayVariable[1] + "\n";		
-			
-			if(i == stmts.size()-1)	//마지막 Case문이면 true
+			UCode += ELEVEN_SPACE + "lod " + arrayVariable[0] + " " + arrayVariable[1] + "\n";
+
+			if (i == stmts.size() - 1) // 마지막 Case문이면 true
 				lastCase = true;
-			
+
 			visitCase_stmt(stmts.get(i));
-			
-			if(i != stmts.size()-1){	//마지막 case가 아니라면 
+
+			if (i != stmts.size() - 1) { // 마지막 case가 아니라면
 				UCode += "<bb " + BBnextCaseNumber + ">:\n"; // BBLeader: 브랜치 직후
-				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";	
-			}	
-			else if( i == stmts.size()-1 && defaultCase == true){	//마지막인데 default가 있는 경우
+				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";
+			} else if (i == stmts.size() - 1 && defaultCase == true) {
+				// 마지막인데 default가 있는 경우
 				UCode += "<bb " + BBnextCaseNumber + ">:\n"; // BBLeader: 브랜치 직후
-				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";	
-			}		
-			//마지막인데 default가있는경우에 대한 U-code는 visitCase_stmt에서 만들어주어 여기서 안만들게한다. (조금최적화)
+				UCode += nextCase + getSpace(nextCase.length()) + "nop\n";
+			}
+			// 마지막인데 default가있는경우에 대한 U-code는 visitCase_stmt에서 만들어주어 여기서 안만들게한다.
+			// (조금최적화)
 		}
-		
-		if(defaultCase == true){
+
+		if (defaultCase == true) {
 			visitDefault_stmt(defaultnode);
 		}
-		UCode += "<bb " + BBSwitch + ">:\n";	//나가는 곳
+		UCode += "<bb " + BBSwitch + ">:\n"; // 나가는 곳
 		UCode += switchEndLabel + getSpace(switchEndLabel.length()) + "nop\n";
 	}
 
@@ -732,40 +728,41 @@ public class UcodeGenVisitor implements ASTVisitor {
 		TerminalNode caseVal = node.caseVal;
 		List<Statement> stmts = node.stmts;
 		TerminalNode breaknode = node.breaknode;
-		
+
 		int Variable[] = getVariableWithShortestScope(caseVal.getText());
-		if (Variable != null) {	//case조건은 문자 or 숫자 박에 안된다.
+		if (Variable != null) { // case조건은 문자 or 숫자 박에 안된다.
 			UCode += ELEVEN_SPACE + "lod " + Variable[0] + " " + Variable[1] + "\n";
-		} else{
+		} else {
 			UCode += ELEVEN_SPACE + "ldc " + caseVal.getText() + "\n";
 		}
 		UCode += ELEVEN_SPACE + "eq\n";
-		if(lastCase == false || defaultCase == true){	//마지막 Case아니거나 마지막인데 default있는경우 다음위치를 정해줘야함
+		if (lastCase == false || defaultCase == true) {
+			// 마지막 Case아니거나 마지막인데 default있는경우 다음위치를 정해줘야함
 			nextCase = getNewLabel();
 			UCode += ELEVEN_SPACE + "fjp " + nextCase + "\n";
 			UCode += ELEVEN_SPACE + "goto " + getNewBasicBlock() + "\n";
 			BBnextCaseNumber = BasicBlockCount;
 			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
-		} else{	//마지막 Case인데 default가 없는경우  여기서 u-code생성
+		} else { // 마지막 Case인데 default가 없는경우 여기서 u-code생성
 			UCode += ELEVEN_SPACE + "fjp " + switchEndLabel + "\n";
 			UCode += ELEVEN_SPACE + "goto <bb " + BBSwitch + ">\n";
 			UCode += getNewBasicBlock() + ":\n"; // BBLeader: 브랜치 직후
 		}
-		
-		for(int i=0; i<stmts.size(); i++){
+
+		for (int i = 0; i < stmts.size(); i++) {
 			visitStmt(stmts.get(i));
 		}
-		
-		if(breaknode != null){	//break문이 있는 경우 switch문 빠져나가게 한다.
+
+		if (breaknode != null) { // break문이 있는 경우 switch문 빠져나가게 한다.
 			UCode += ELEVEN_SPACE + "ujp " + switchEndLabel + "\n";
 			UCode += ELEVEN_SPACE + "goto <bb " + BBSwitch + ">\n";
 		}
-	}	
+	}
 
 	@Override
 	public void visitDefault_stmt(Default_Statement node) {
 		List<Statement> stmts = node.stmts;
-		for(int i=0; i<stmts.size(); i++)
+		for (int i = 0; i < stmts.size(); i++)
 			visitStmt(stmts.get(i));
 	}
 
