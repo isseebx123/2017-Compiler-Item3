@@ -693,7 +693,7 @@ public class UcodeGenVisitor implements ASTVisitor {
 		
 		for(int i=0; i<stmts.size(); i++){
 			int arrayVariable[] = getVariableWithShortestScope(ident.getText());
-			UCode += ELEVEN_SPACE + "lda " + arrayVariable[0] + " " + arrayVariable[1] + "\n";		
+			UCode += ELEVEN_SPACE + "lod " + arrayVariable[0] + " " + arrayVariable[1] + "\n";		
 			
 			if(i == stmts.size()-1)	//마지막 Case문이면 true
 				lastCase = true;
