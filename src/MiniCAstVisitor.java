@@ -41,7 +41,7 @@ public class MiniCAstVisitor extends MiniCBaseVisitor {
 		ParseTree childDecl = ctx.getChild(0);
 		Declaration decl = null;
 
-		/* Local_Declaration은 들어오지 않는다! */
+		
 		if (childDecl instanceof MiniCParser.Fun_declContext) {
 			decl = visitFun_decl((MiniCParser.Fun_declContext) childDecl);
 		} else if (childDecl instanceof MiniCParser.Var_declContext) {
