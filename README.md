@@ -14,7 +14,7 @@
 >__1_Float__ <br>
 >__2_Double__ <br>
 
-## [3. Type_Checking]
+## [4. Type_Checking]
 >__1_Var_decl__ <br>
 >__2_Local_decl__ <br>
 >__3_Param__ <br>
